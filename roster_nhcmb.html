@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NHC Morro Bay — Rep Roster</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary: #1E2433;
+  --accent:  #5BB8B4;
+  --bg:      #F5F4F0;
+  --surface: #FFFFFF;
+  --border:  #E0DFD8;
+  --text:    #1A1A18;
+  --muted:   #888780;
+  --purple:  #5B3F8A;
+  --purple-light: #F3F0FA;
+  --green:   #10B981;
+  --green-light: #D4EDDA;
+  --red:     #EF4444;
+  --red-light: #FEE2E2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── BANNER ── */
+.banner{background:var(--primary);padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.banner-left{display:flex;align-items:center;gap:14px}
+.banner-logo img{height:40px;width:auto;filter:brightness(0) invert(1)}
+.banner-title{font-family:'DM Serif Display',serif;font-size:18px;color:#fff}
+.banner-sub{font-size:12px;color:rgba(255,255,255,0.55);margin-top:2px}
+.banner-right{display:flex;align-items:center;gap:10px}
+.lock-btn{font-size:12px;font-weight:500;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);padding:7px 14px;border-radius:8px;cursor:pointer;border:none;font-family:inherit}
+
+/* ── AUTH ── */
+.auth-screen{min-height:80vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.auth-card{background:var(--surface);border:0.5px solid var(--border);border-radius:16px;padding:2rem;max-width:360px;width:100%;text-align:center}
+.auth-icon{font-size:32px;margin-bottom:.75rem}
+.auth-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--text);margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:1.25rem}
+.auth-input{width:100%;padding:10px 14px;font-size:15px;border:1.5px solid var(--border);border-radius:9px;font-family:monospace;letter-spacing:4px;text-align:center;outline:none;background:var(--bg);color:var(--text);margin-bottom:10px;transition:border-color .15s}
+.auth-input:focus{border-color:var(--purple)}
+.auth-input.error{border-color:var(--red);animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.auth-btn{width:100%;padding:11px;font-size:14px;font-weight:600;color:#fff;background:var(--primary);border:none;border-radius:9px;cursor:pointer;font-family:inherit}
+.auth-error{font-size:12px;color:var(--red);min-height:16px;margin-bottom:6px}
+
+/* ── MAIN ── */
+.main{display:none;max-width:800px;margin:0 auto;padding:1.75rem 1rem 3rem}
+
+/* ── STATS BAR ── */
+.stats-bar{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.75rem}
+.stat-card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1rem;text-align:center}
+.stat-val{font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--text)}
+.stat-label{font-size:11px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── ADD REP FORM ── */
+.add-section{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.5rem}
+.add-header{background:var(--primary);padding:.875rem 1.25rem}
+.add-header-title{font-size:13px;font-weight:600;color:#fff}
+.add-body{padding:1.25rem}
+.add-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}
+.field-wrap{display:flex;flex-direction:column;gap:5px}
+.field-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.field-input{padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;transition:border-color .15s}
+.field-input:focus{border-color:var(--purple)}
+.add-btn{padding:9px 20px;font-size:13px;font-weight:600;color:#fff;background:var(--purple);border:none;border-radius:8px;cursor:pointer;font-family:inherit;white-space:nowrap;height:38px}
+.add-btn:hover{opacity:.88}
+.add-error{font-size:12px;color:var(--red);margin-top:6px;min-height:16px}
+
+/* ── REP TABLE ── */
+.roster-card{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;overflow:hidden}
+.roster-header{padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border)}
+.roster-header-title{font-size:13px;font-weight:600;color:var(--text)}
+.roster-actions{display:flex;gap:8px}
+.copy-btn{font-size:12px;font-weight:500;color:var(--purple);background:var(--purple-light);border:none;padding:6px 12px;border-radius:7px;cursor:pointer;font-family:inherit}
+.export-btn{font-size:12px;font-weight:500;color:var(--muted);background:var(--bg);border:1px solid var(--border);padding:6px 12px;border-radius:7px;cursor:pointer;font-family:inherit}
+.roster-empty{text-align:center;padding:3rem 1rem;color:var(--muted);font-size:13px}
+.roster-row{display:grid;grid-template-columns:1fr 1.2fr 130px auto;gap:10px;align-items:center;padding:11px 1.25rem;border-bottom:0.5px solid var(--border);transition:background .1s}
+.roster-row:last-child{border-bottom:none}
+.roster-row:hover{background:var(--bg)}
+.rep-name-cell{font-size:13px;font-weight:500;color:var(--text);display:flex;align-items:center;gap:8px}
+.rep-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.rep-email-cell{font-size:12px;color:var(--muted)}
+.rep-actions{display:flex;gap:6px}
+.del-btn{font-size:11px;color:var(--red);background:var(--red-light);border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-family:inherit}
+.pin-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--purple-light);color:var(--purple)}
+.pin-set-btn{font-size:11px;color:var(--purple);background:var(--purple-light);border:none;padding:4px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
+.del-btn:hover{opacity:.8}
+
+  .pin-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;background:var(--purple-light);color:var(--purple)}
+  .pin-set-btn{font-size:11px;color:var(--purple);background:var(--purple-light);border:none;padding:3px 10px;border-radius:7px;cursor:pointer;font-family:inherit}
+  .pin-input-wrap{display:flex;gap:6px;align-items:center}
+  .pin-inline-input{width:80px;padding:5px 8px;font-size:13px;border:1px solid var(--border);border-radius:7px;background:var(--bg);color:var(--text);font-family:monospace;letter-spacing:3px;text-align:center;outline:none}
+  .pin-inline-input:focus{border-color:var(--purple)}
+  .pin-save-btn{font-size:11px;font-weight:600;color:#fff;background:var(--purple);border:none;padding:5px 10px;border-radius:7px;cursor:pointer}
+
+
+/* ── NOTIFY SECTION ── */
+.notify-section{background:var(--surface);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-top:1.5rem}
+.notify-header{background:linear-gradient(135deg,#2D1B69,#5B3F8A);padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
+.notify-header-title{font-size:13px;font-weight:600;color:#fff}
+.notify-badge{font-size:11px;color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.1);padding:3px 10px;border-radius:20px}
+.notify-body{padding:1.25rem}
+.notify-preview{background:var(--bg);border:0.5px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;font-size:13px;line-height:1.6;color:var(--text)}
+.notify-preview-subject{font-weight:600;color:var(--purple);margin-bottom:6px;font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+.notify-input{width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-family:inherit;outline:none;margin-bottom:10px}
+.notify-input:focus{border-color:var(--purple)}
+.notify-btn{width:100%;padding:11px;font-size:14px;font-weight:600;color:#fff;background:linear-gradient(135deg,#2D1B69,#5B3F8A);border:none;border-radius:9px;cursor:pointer;font-family:inherit}
+.notify-btn:hover{opacity:.88}
+.notify-btn:disabled{opacity:.5;cursor:not-allowed}
+.notify-status{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px}
+.notify-service-note{font-size:12px;color:var(--muted);background:var(--bg);border:0.5px solid var(--border);border-radius:8px;padding:.75rem;margin-top:10px;line-height:1.5}
+.notify-service-note strong{color:var(--text);display:block;margin-bottom:2px}
+
+.section-divider{border:none;border-top:0.5px solid var(--border);margin:1.5rem 0}
+
+  /* ── Hamburger nav drawer ────────────────────────────── */
+  .ham-btn{position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.12);border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;z-index:200;transition:background .15s}
+  .ham-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-line{width:18px;height:2px;background:#fff;border-radius:2px;transition:all .25s}
+  .ham-btn.open .ham-line:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .ham-btn.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0)}
+  .ham-btn.open .ham-line:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .ham-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+  .ham-overlay.visible{opacity:1;pointer-events:all}
+  .ham-drawer{position:fixed;top:0;left:0;width:280px;height:100%;background:#fff;z-index:400;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,0.12)}
+  .ham-drawer.open{transform:translateX(0)}
+  .ham-drawer-header{background:var(--nav-primary,#1E2433);padding:1.25rem 1.25rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .ham-drawer-logo{font-family:'DM Serif Display',serif;font-size:18px;font-weight:600;color:#fff;display:flex;align-items:center;gap:6px}
+  .ham-drawer-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--nav-accent,#5BB8B4);flex-shrink:0}
+  .ham-drawer-shop{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px}
+  .ham-close-btn{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.1);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .ham-close-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-nav{flex:1;overflow-y:auto;padding:.75rem 0}
+  .ham-section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#9CA3AF;padding:.5rem 1.25rem .375rem;margin-top:.5rem}
+  .ham-nav-item{display:flex;align-items:center;gap:12px;padding:.875rem 1.25rem;text-decoration:none;color:#1A1A18;transition:background .12s;cursor:pointer;border:none;background:none;width:100%;font-family:inherit;text-align:left}
+  .ham-nav-item:hover{background:#F5F4F0}
+  .ham-nav-item.active{background:#F3F0FA;color:#5B3F8A}
+  .ham-nav-item.active .ham-nav-icon{background:#5B3F8A}
+  .ham-nav-icon{width:34px;height:34px;border-radius:9px;background:#1E2433;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .ham-nav-text{flex:1}
+  .ham-nav-label{font-size:14px;font-weight:500;color:inherit}
+  .ham-nav-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+  .ham-nav-badge{font-size:10px;font-weight:600;color:#5B3F8A;background:#F3F0FA;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .ham-nav-item.mgr-item .ham-nav-label{color:#5B3F8A}
+  .ham-divider{height:1px;background:#F0EEE8;margin:.5rem 0}
+  .ham-footer{padding:1rem 1.25rem;border-top:1px solid #F0EEE8;flex-shrink:0}
+  .ham-footer-brand{font-size:11px;color:#9CA3AF}
+  .ham-footer-brand span{color:#5B3F8A;font-weight:600}
+</style>
+</head>
+<body>
+<!-- Hamburger overlay + drawer -->
+<div class="ham-overlay" id="ham-overlay" onclick="closeDrawer()"></div>
+<div class="ham-drawer" id="ham-drawer">
+  <div class="ham-drawer-header">
+    <div>
+      <div class="ham-drawer-logo">Perennial <div class="ham-drawer-logo-dot"></div></div>
+      <div class="ham-drawer-shop" id="ham-shop-name"></div>
+    </div>
+    <button class="ham-close-btn" onclick="closeDrawer()">X</button>
+  </div>
+  <nav class="ham-nav">
+    <div class="ham-section-label">Main</div>
+    <a class="ham-nav-item" id="ham-hub" href="index.html">
+      <div class="ham-nav-icon">&#127968;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-leaderboard" href="leaderboard.html">
+      <div class="ham-nav-icon">&#127942;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Leaderboard</div><div class="ham-nav-sub">Live team rankings</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-redeem" href="redeem.html">
+      <div class="ham-nav-icon">&#127873;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-myrep" href="myrep.html">
+      <div class="ham-nav-icon">&#11088;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
+    </a>
+    <div class="ham-divider"></div>
+    <div class="ham-section-label">Manager</div>
+    <a class="ham-nav-item mgr-item" id="ham-roster" href="roster.html">
+      <div class="ham-nav-icon">&#128101;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Roster</div><div class="ham-nav-sub">Manage reps &amp; notifications</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+    <a class="ham-nav-item mgr-item" id="ham-dashboard" href="dashboard.html">
+      <div class="ham-nav-icon">&#128202;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Dashboard</div><div class="ham-nav-sub">Performance reports</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+    <a class="ham-nav-item mgr-item" id="ham-portal" href="brand-portal.html">
+      <div class="ham-nav-icon">&#127807;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Brand Portal</div><div class="ham-nav-sub">GHF &amp; Plus read-only view</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+  </nav>
+  <div class="ham-footer">
+    <div class="ham-footer-brand">Perennial <span>Rewards</span></div>
+  </div>
+</div>
+
+
+<!-- Banner -->
+<div class="banner" style="position:relative">
+  <button class="ham-btn" id="ham-btn" onclick="openDrawer()" aria-label="Open menu"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
+  <div class="banner-left">
+    <div class="banner-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgMzgxLjUyIj48ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIj48ZyBpZD0iTGF5ZXJfMS0yIiBkYXRhLW5hbWU9IkxheWVyIDEiPjxwYXRoIGQ9Ik0zLjksMzYxLjA1djIwSDBWMzU1SDRsMTQuMTUsMTkuNVYzNTVoMy45djI2SDE4LjI5WiIvPjxwYXRoIGQ9Ik00OC4yLDM3NS42M0gzNS40NUwzMy4zNSwzODFoLTQuM2wxMC4zNC0yNmg0Ljg3TDU0LjYsMzgxSDUwLjMxWm0tMTEuNjItMy40N0g0Ny4wN2wtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNNjUuNCwzNTguNDNINTcuMzNWMzU1aDIwdjMuNDNoLThWMzgxSDY1LjRaIi8+PHBhdGggZD0iTTg1LjI5LDM1NWgzLjk0djE1LjcyYzAsNC40NCwyLjQ2LDcuMjksNyw3LjI5czctMi44NSw3LTcuMjlWMzU1aDMuOTR2MTUuOGMwLDYuNDctMy42MiwxMC42OC0xMC45MiwxMC42OHMtMTEtNC4yNS0xMS0xMC42NFoiLz48cGF0aCBkPSJNMTI1LjY2LDM3MWgtNC44N3YxMGgtMy45VjM1NWgxMWM1LDAsOC4zNSwzLjIsOC4zNSw4YTcuMjUsNy4yNSwwLDAsMS02LjQ3LDcuNkwxMzYuMzgsMzgxaC00LjUyWm0xLjY4LTEyLjU2aC02LjU1djkuMTNoNi41NWE0LjU3LDQuNTcsMCwxLDAsMC05LjEzWiIvPjxwYXRoIGQ9Ik0xNjEuMzUsMzc1LjYzSDE0OC41OWwtMi4xLDUuMzhIMTQyLjJsMTAuMzMtMjZoNC44OGwxMC4zMywyNmgtNC4yOVptLTExLjYzLTMuNDdoMTAuNDlMMTU1LDM1OC4zOVoiLz48cGF0aCBkPSJNMTc0Ljc2LDM1NWgzLjl2MjIuNThoMTEuODJWMzgxSDE3NC43NloiLz48cGF0aCBkPSJNMjMwLjkyLDM2OS4zOUgyMTYuNTNWMzgxaC0zLjlWMzU1aDMuOXYxMC45MmgxNC4zOVYzNTVoMy45djI2aC0zLjlaIi8+PHBhdGggZD0iTTI0NC41LDM1NUgyNjJ2My40M0gyNDguNFYzNjZoMTMuMjl2My40M0gyNDguNHY4LjExSDI2MlYzODFIMjQ0LjVaIi8+PHBhdGggZD0iTTI4Ny4yLDM3NS42M0gyNzQuNDVMMjcyLjM0LDM4MWgtNC4yOWwxMC4zNC0yNmg0Ljg3bDEwLjM0LDI2aC00LjI5Wm0tMTEuNjItMy40N2gxMC40OWwtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNMzAwLjYyLDM1NWgzLjl2MjIuNThoMTEuODFWMzgxSDMwMC42MloiLz48cGF0aCBkPSJNMzI0LjUzLDM1NWgzLjl2MjZoLTMuOVoiLz48cGF0aCBkPSJNMzQyLDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE2LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNMzgyLjI4LDM1NC41N2ExMi4yMSwxMi4yMSwwLDAsMSwxMC4zLDUuMTVsLTMuMTYsMS44M2E5LDksMCwwLDAtNy4xNC0zLjUxYy01LjQyLDAtOS40Nyw0LjE0LTkuNDcsMTBzNC4wNSwxMCw5LjQ3LDEwYTEwLjExLDEwLjExLDAsMCwwLDYuNi0yLjU3VjM3MC44aC04LjM1di0zLjQ0aDEyLjI1djkuNTZhMTMuODYsMTMuODYsMCwwLDEtMTAuNSw0LjZBMTMuMDksMTMuMDksMCwwLDEsMzY4Ljc5LDM2OEMzNjguNzksMzU5LjkxLDM3NC44NCwzNTQuNTcsMzgyLjI4LDM1NC41N1oiLz48cGF0aCBkPSJNNDE0LjU0LDM2OGExMywxMywwLDAsMSwxMy4zNC0xMy40NiwxMS43NywxMS43NywwLDAsMSwxMC4zMyw1LjVsLTMuMzEsMS43NmE4LjI0LDguMjQsMCwwLDAtNy0zLjc5Yy01LjI3LDAtOS4zMiw0LjE0LTkuMzIsMTBzNC4wNSwxMCw5LjMyLDEwYTguMjYsOC4yNiwwLDAsMCw3LTMuNzhsMy4zMSwxLjc1YTExLjgsMTEuOCwwLDAsMS0xMC4zMyw1LjVBMTMsMTMsMCwwLDEsNDE0LjU0LDM2OFoiLz48cGF0aCBkPSJNNDQ2LDM1NWgxNy40N3YzLjQzSDQ0OS45MVYzNjZoMTMuM3YzLjQzaC0xMy4zdjguMTFoMTMuNTdWMzgxSDQ0NloiLz48cGF0aCBkPSJNNDc2LjE2LDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE1LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNNTEwLjM2LDM1OC40M2gtOC4wN1YzNTVoMjB2My40M2gtOFYzODFoLTMuOVoiLz48cGF0aCBkPSJNNTMwLjI1LDM1NWgxNy40OHYzLjQzSDUzNC4xNlYzNjZoMTMuMjl2My40M0g1MzQuMTZ2OC4xMWgxMy41N1YzODFINTMwLjI1WiIvPjxwYXRoIGQ9Ik01NjUuMjgsMzcxSDU2MC40djEwaC0zLjlWMzU1aDExYzQuOTUsMCw4LjM1LDMuMiw4LjM1LDhhNy4yNSw3LjI1LDAsMCwxLTYuNDgsNy42TDU3NiwzODFoLTQuNTJaTTU2NywzNTguNDNINTYwLjR2OS4xM0g1NjdhNC41Nyw0LjU3LDAsMSwwLDAtOS4xM1oiLz48cGF0aCBkPSJNNTcwLDI1MC42NWE2LjcsNi43LDAsMCwwLTMtLjY2LDEzLjY1LDEzLjY1LDAsMCwwLTUuMjgsMS4zM0M1NTAuMjIsMjU3LDUxNS4xOCwyNzMuNyw0OTMsMjgxLjc2Yy0yMy4xNCw4LjM5LTMzLjM1LDEyLjE5LTQ4LjU0LDExYTgsOCwwLDAsMS03LjI1LTcuNjZxMC0xMi4xNSw5LjEyLTI4LjE0LDguNDQtMTQuNjcsMTgtMjMuNTIsMTAuMTctOS43OCwxOC42My05Ljc4YTEyLjM3LDEyLjM3LDAsMCwxLDksNGMyLDEuOTMsNC4wNSwyLjksNi4wOCwyLjlxNS44MiwwLDguMzItNS45NGE3LjUxLDcuNTEsMCwwLDAsLjUzLTIuNzgsOS4xNiw5LjE2LDAsMCwwLTIuMzgtNS44MXEtOS45LTEwLTIxLTEwYTM1LjgxLDM1LjgxLDAsMCwwLTEwLjE3LDEuNDVjLTUuMTgsMS40My0xMi4xNiw1LjQ2LTIwLjYxLDEzLjQ4YTEwNy4yNCwxMDcuMjQsMCwwLDAtMTcuMzksMjEuNDksMjEzLjQ3LDIxMy40NywwLDAsMS0yOC41OSwyNy43OXEtMjYuMTYsMjEuNTQtNDMuNiwyMS41NC0xMC4wNSwwLTE1LjkyLTQuODlhMzUuMSwzNS4xLDAsMCwxLTkuMzgtMTIuMzYsMTI3LjU3LDEyNy41NywwLDAsMS02LjE1LTE1Ljc5LDE0My45NCwxNDMuOTQsMCwwLDAtNS41NS0xNC40LDMyLjI1LDMyLjI1LDAsMCwwLTgtMTEuMXEtNS00LjM1LTEzLjE1LTQuMzYtMTQuNTQsMC0zMi4xMSwxNC44QTEzNSwxMzUsMCwwLDAsMjQ4LDI3MS4xNGwtLjEzLTcuMTRxMC0xMiwxLjA2LTI0LjA1LDE0LjY3LTI2LjI4LDQ4LjA5LTc0LjUyLDIzLTMyLjc2LDQzLjIxLTY1LjU0dDMwLjI2LTYzYTU3LjkyLDU3LjkyLDAsMCwwLDIuNzctMTYuMzlxMC05LjM3LTUuMTUtMTQuOTNUMzUyLjY0LDBhNjIuNDEsNjIuNDEsMCwwLDAtMTUuMzMsMi4yNVEyOTcuNTUsMTQsMjcwLjQ1LDc1LjQ1cS0yMS45Myw1MC0zMi43NiwxMTYuMjctNC4wOCwyNC43Ni01Ljc1LDQ2LjM1LTYuMzcsNy4xNC0xNC43OCwxNS4zN2EyMDcuNDIsMjA3LjQyLDAsMCwxLTMxLjIyLDI1LjIzcS0xNi41OSwxMC45LTMxLjExLDExLjcxLTkuMjYuMTItMTQuMy02LjA5YTQwLjcxLDQwLjcxLDAsMCwxLTcuNS0xNS45MiwxOTMuODEsMTkzLjgxLDAsMCwxLTQtMjAuNjIsMjM5LDIzOSwwLDAsMC00Ljc0LTIzLjQ5LDUyLjE1LDUyLjE1LDAsMCwwLTguODYtMTlxLTYtNy44MS0xNy4zNy0xMC4yMmEyOC40NiwyOC40NiwwLDAsMC01LjU4LS4yMnEtOC40My40Ni0xOS4xMyw3dC0yMi41LDE5YTMwNC41NywzMDQuNTcsMCwwLDAtMjEuNzksMjUuNzZjLjUyLTMuMjksMS4xLTYuNDYsMS43Mi05LjQ5YTEyLjkxLDEyLjkxLDAsMCwwLC4xMy0yLjUyLDcuMjEsNy4yMSwwLDAsMC0zLTUuNzMsOS41OSw5LjU5LDAsMCwwLTYuMjYtMS44MywyNi4yNSwyNi4yNSwwLDAsMC0zLjU0LjY2cS0yLjYxLjYxLTQsNi0zLjA4LDE2LTUuMzUsMzIuMzJDNy4yNywyNzUuMDYsMywyOTMuNzUsMywyOTQuOWE4LjQyLDguNDIsMCwwLDAsMi43Nyw1Ljg2QTguNzMsOC43MywwLDAsMCwxMi41NSwzMDNhNy44Miw3LjgyLDAsMCwwLDYuMjYtMy45MmMxMi42OS0yNy40MSwyMi44LTQxLjg0LDM4LjM5LTYwLjU1QzczLDIxOS41Nyw4My42NywyMTIuMjksOTIuMzgsMjExLjhhMTEuNjQsMTEuNjQsMCwwLDEsMi41Mi4xM3E4LjE3LDIuMDcsMTEuNzEsMTMuMTdhMTY1LjI2LDE2NS4yNiwwLDAsMSw1LjY5LDI2LjE2QTIwMi43NSwyMDIuNzUsMCwwLDAsMTE4LDI3OC42cTMuNTMsMTIuMywxMS44MiwxOS44NnQyNC41NSw3LjNxMTcuOC0xLDM2LTEyLjU5YTE5NC43OCwxOTQuNzgsMCwwLDAsMzMuODgtMjcuNDFjMi4yNy0yLjMsNC40NC00LjU1LDYuNTQtNi43OC0uMDcsMi45MS0uMTEsNS43OC0uMTEsOC41OXEwLDEuNTkuMDYsMTAuODR0My42NCwyM2MxLjQ5LDQuMTUsNC4xOCw2LjIxLDguMDUsNi4yMXE1LjU1LDAsOC40Ni02LjM0YTk5LjM5LDk5LjM5LDAsMCwxLDguNDYtMTZBMTQ0LjQ4LDE0NC40OCwwLDAsMSwyNzMsMjY3LjFhOTgsOTgsMCwwLDEsMTYuMTgtMTVxOC4zOS02LjA4LDE1Ljc5LTYuMDhjMi4yLDAsNCwxLjU3LDUuNDIsNC42OWE5OS40NCw5OS40NCwwLDAsMSw0LjI5LDExLjlxMi4xOSw3LjE5LDUuNDIsMTUuMTJhNjcuOCw2Ny44LDAsMCwwLDguNTIsMTUsNDEuNjIsNDEuNjIsMCwwLDAsMTMuNjEsMTEuNjNxOC4zMiw0LjU2LDIwLjg4LDQuNTYsMjIuMDcsMCw0OS4xNS0yMy4yNmMyLjg4LTIuNDgsNS43MS01LjA2LDguNDktNy43MWE1Myw1MywwLDAsMC0uNTcsNy40NXEwLDEwLjQ0LDUuMzYsMTYuODR0MTcuMjQsNi41NGExNTIuMSwxNTIuMSwwLDAsMCw1Ni4xNi0xMi40MmMyMy40NS05LjkyLDIyLjI0LTEwLjMxLDY5LjEtMzQuMzVxNS0yLjkxLDUtNi40OEE1LjE5LDUuMTksMCwwLDAsNTcwLDI1MC42NVpNMjgwLjUsOTUuNjdxMjQuODQtNjUuNjcsNjEuMTctNzdhMzMuNTQsMzMuNTQsMCwwLDEsOS4xMi0xLjcxcTUuNDEsMCw1LjQyLDUuNTVhMzMuNCwzMy40LDAsMCwxLTEuNzIsOXEtOC43MywyNy4zNS0zMS4xMiw2My4yM3QtNDUuNzgsNjkuNDNxLTEzLjc0LDE5LjgxLTI0LjE4LDM1LjY4QTUwNS43MSw1MDUuNzEsMCwwLDEsMjgwLjUsOTUuNjdaIi8+PC9nPjwvZz48L3N2Zz4=" alt="NHC Morro Bay"></div>
+    <div>
+      <div class="banner-title">Rep Roster</div>
+      <div class="banner-sub">NHC Morro Bay · Perennial Rewards Manager</div>
+    </div>
+  </div>
+  <div class="banner-right">
+    <button class="lock-btn" onclick="lockPage()">🔒 Lock</button>
+  </div>
+</div>
+
+<!-- Auth screen -->
+<div class="auth-screen" id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-icon">🔐</div>
+    <div class="auth-title">Manager access</div>
+    <div class="auth-sub">Enter your manager password to manage the rep roster.</div>
+    <div class="auth-error" id="auth-error"></div>
+    <input class="auth-input" type="password" id="auth-input" placeholder="••••••••" maxlength="30"
+      onkeydown="if(event.key==='Enter')checkAuth()">
+    <button class="auth-btn" onclick="checkAuth()">Unlock Roster</button>
+  </div>
+</div>
+
+<!-- Main content -->
+<div class="main" id="main-content">
+
+  <!-- Stats -->
+  <div class="stats-bar">
+    <div class="stat-card"><div class="stat-val" id="stat-total">0</div><div class="stat-label">Total Reps</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-email">0</div><div class="stat-label">With Email</div></div>
+    <div class="stat-card"><div class="stat-val" id="stat-shop">Farmacy</div><div class="stat-label">Location</div></div>
+  </div>
+
+  <!-- Add rep -->
+  <div class="add-section">
+    <div class="add-header"><div class="add-header-title">➕ Add rep to roster</div></div>
+    <div class="add-body">
+      <div class="add-row">
+        <div class="field-wrap">
+          <label class="field-label">Full name</label>
+          <input class="field-input" type="text" id="new-name" placeholder="As shown on leaderboard" onkeydown="if(event.key==='Enter')addRep()">
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Email address</label>
+          <input class="field-input" type="email" id="new-email" placeholder="rep@email.com" onkeydown="if(event.key==='Enter')addRep()">
+        </div>
+        <button class="add-btn" onclick="addRep()">Add rep</button>
+      </div>
+      <div class="add-error" id="add-error"></div>
+    </div>
+  </div>
+
+  <!-- Roster table -->
+  <div class="roster-card">
+    <div class="roster-header">
+      <div class="roster-header-title">Current roster</div>
+      <div class="roster-actions">
+        <button class="copy-btn" onclick="copyEmails()">📋 Copy all emails</button>
+        <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+    <div id="roster-list">
+      <div class="roster-empty">No reps added yet. Add your first rep above.</div>
+    </div>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Notification section -->
+  <div class="notify-section">
+    <div class="notify-header">
+      <div class="notify-header-title">⭐ Notify reps — new data uploaded</div>
+      <div class="notify-badge">Email all reps</div>
+    </div>
+    <div class="notify-body">
+      <div class="notify-preview">
+        <div class="notify-preview-subject">Preview — what reps will receive</div>
+        <strong>Subject:</strong> 🏆 Your NHC Morro Bay leaderboard just updated<br><br>
+        Hey [Rep Name],<br><br>
+        The <strong>NHC Morro Bay</strong> leaderboard has been updated with the latest data.<br><br>
+        👀 <strong>Your current rank: [#X of Y]</strong><br>
+        Check the leaderboard to see where you stand and how close you are to your next reward.<br><br>
+        <a href="https://farmacyrewards.github.io/nhcmb/leaderboard.html" style="color:#5B3F8A">👉 View the leaderboard →</a><br><br>
+        Keep pushing — rewards are waiting! 🎁<br><br>
+        — The Perennial Team
+      </div>
+
+      <div class="notify-service-note">
+        <strong>📧 Email service setup required</strong>
+        To send notifications, connect an email service below. Recommended: <strong>EmailJS</strong> (free, no backend needed) or <strong>SendGrid</strong> (free tier). Add your service credentials and uncomment the send function in the code.
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="field-label" style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">Custom message (optional)</label>
+        <input class="notify-input" type="text" id="custom-message" placeholder="e.g. 'Big push this week — gift cards on the line!'">
+      </div>
+
+      <button class="notify-btn" id="notify-btn" onclick="sendNotifications()">
+        📨 Send update to all reps (<span id="rep-count">0</span>)
+      </button>
+      <div class="notify-status" id="notify-status"></div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────
+const MANAGER_PASSWORD = 'NHC2026';
+const SHOP_NAME        = 'NHC Morro Bay';
+const LEADERBOARD_URL  = 'https://farmacyrewards.github.io/nhcmb/leaderboard.html';
+const STORAGE_KEY      = 'nhc_mb';
+
+// ── EMAIL SERVICE ───────────────────────────────────────────────
+// When ready to connect EmailJS or SendGrid, implement this function:
+async function sendEmail(toEmail, toName, rank, total, customMsg) {
+  // ── EmailJS example (uncomment and fill in your credentials):
+  // await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', {
+  //   to_email: toEmail,
+  //   to_name: toName,
+  //   shop_name: SHOP_NAME,
+  //   rank: rank,
+  //   total: total,
+  //   custom_message: customMsg,
+  //   leaderboard_url: LEADERBOARD_URL,
+  // });
+
+  // ── Placeholder — logs to console until service is connected:
+  console.log('Would send to:', toEmail, '| Rank:', rank, 'of', total);
+  return true; // Remove this line once real service is connected
+}
+// ───────────────────────────────────────────────────────────────
+
+const COLORS = ['#5B3F8A','#10B981','#C9A84C','#5BB8B4','#E05252','#8B5CF6','#F59E0B','#14B8A6'];
+const ini = n => n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+
+// ── Auth ──────────────────────────────────────────────────────
+function checkAuth(){
+  const val = document.getElementById('auth-input').value;
+  if(val === MANAGER_PASSWORD){
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('main-content').style.display = 'block';
+    renderRoster();
+  } else {
+    const inp = document.getElementById('auth-input');
+    document.getElementById('auth-error').textContent = 'Incorrect password.';
+    inp.classList.add('error'); inp.value = '';
+    setTimeout(()=>inp.classList.remove('error'), 400);
+  }
+}
+function lockPage(){
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('main-content').style.display = 'none';
+  document.getElementById('auth-input').value = '';
+}
+document.getElementById('auth-input').addEventListener('keydown', e=>{ if(e.key==='Enter') checkAuth(); });
+
+// ── Roster storage ────────────────────────────────────────────
+function getRoster(){ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]'); }
+function saveRoster(r){ localStorage.setItem(STORAGE_KEY, JSON.stringify(r)); }
+
+function addRep(){
+  const name  = document.getElementById('new-name').value.trim();
+  const email = document.getElementById('new-email').value.trim();
+  const errEl = document.getElementById('add-error');
+  if(!name)  { errEl.textContent = 'Please enter a name.'; return; }
+  if(!email) { errEl.textContent = 'Please enter an email.'; return; }
+  if(!/^[^@]+@[^@]+\.[^@]+$/.test(email)) { errEl.textContent = 'Please enter a valid email.'; return; }
+  const roster = getRoster();
+  if(roster.find(r=>r.name.toLowerCase()===name.toLowerCase())){ errEl.textContent = 'A rep with this name already exists.'; return; }
+  roster.push({ name, email, addedAt: new Date().toISOString() });
+  saveRoster(roster);
+  document.getElementById('new-name').value = '';
+  document.getElementById('new-email').value = '';
+  errEl.textContent = '';
+  renderRoster();
+  document.getElementById('new-name').focus();
+}
+
+function deleteRep(name){
+  if(!confirm('Remove ' + name + ' from the roster?')) return;
+  saveRoster(getRoster().filter(r=>r.name !== name));
+  renderRoster();
+}
+
+function getPinKey(name){ return 'rep_pin_' + SHOP_NAME.replace(/\s/g,'_') + '_' + name.replace(/\s/g,'_'); }
+function getPin(name){ return localStorage.getItem(getPinKey(name)) || ''; }
+function setPin(name, pin){ localStorage.setItem(getPinKey(name), pin); }
+function editPin(name){
+  const existing = getPin(name);
+  const pin = prompt('Set a 4-6 digit PIN for ' + name + ':' + (existing ? ' (current: '+existing+')' : ''), existing || '');
+  if(pin === null) return;
+  if(pin.length < 4 || pin.length > 6 || !/^\d+$/.test(pin)){ alert('PIN must be 4-6 digits only.'); return; }
+  setPin(name, pin);
+  renderRoster();
+}
+function renderRoster(){
+  const roster = getRoster();
+  const listEl = document.getElementById('roster-list');
+  document.getElementById('stat-total').textContent = roster.length;
+  document.getElementById('stat-email').textContent = roster.filter(r=>r.email).length;
+  document.getElementById('rep-count').textContent = roster.length;
+
+  if(!roster.length){
+    listEl.innerHTML = '<div class="roster-empty">No reps added yet. Add your first rep above.</div>';
+    return;
+  }
+  listEl.innerHTML = roster.map((rep,i)=>{
+    const color = COLORS[i%COLORS.length];
+    return `<div class="roster-row">
+      <div class="rep-name-cell">
+        <div class="rep-avatar" style="background:${color}22;color:${color}">${ini(rep.name)}</div>
+        ${rep.name}
+      </div>
+      <div class="rep-email-cell">${rep.email}</div>
+      <div>${getPin(rep.name) ? `<span class="pin-badge">PIN: ${getPin(rep.name)}</span>` : `<button class="pin-set-btn" onclick="editPin('${rep.name.replace(/'/g,String.fromCharCode(92,39))}')">Set PIN</button>`}</div>
+      <div class="rep-actions">
+        <button class="del-btn" onclick="deleteRep('${rep.name.replace(/'/g,"\'")}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function copyEmails(){
+  const emails = getRoster().map(r=>r.email).join(', ');
+  if(!emails){ alert('No emails in roster yet.'); return; }
+  navigator.clipboard.writeText(emails).then(()=>alert('Emails copied to clipboard!'));
+}
+
+function exportCSV(){
+  const roster = getRoster();
+  if(!roster.length){ alert('No reps to export.'); return; }
+  const csv = 'Name,Email,Added\n' + roster.map(r=>`"${r.name}","${r.email}","${r.addedAt?.slice(0,10)||''}"` ).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'roster_' + SHOP_NAME.replace(/\s+/g,'_') + '.csv';
+  a.click();
+}
+
+async function sendNotifications(){
+  const roster = getRoster();
+  if(!roster.length){ alert('No reps in roster yet.'); return; }
+  const customMsg = document.getElementById('custom-message').value.trim();
+  const btn = document.getElementById('notify-btn');
+  const statusEl = document.getElementById('notify-status');
+  btn.disabled = true;
+  let sent = 0, failed = 0;
+  for(let i=0; i<roster.length; i++){
+    const rep = roster[i];
+    const rank = i+1; // In production, pull real rank from Firebase
+    statusEl.textContent = `Sending ${i+1} of ${roster.length}...`;
+    try{
+      await sendEmail(rep.email, rep.name, rank, roster.length, customMsg);
+      sent++;
+    } catch(e){
+      console.error('Failed to send to', rep.email, e);
+      failed++;
+    }
+    await new Promise(r=>setTimeout(r,200));
+  }
+  btn.disabled = false;
+  statusEl.textContent = sent + ' notifications sent' + (failed>0?' · '+failed+' failed':'') + ' ✅';
+  setTimeout(()=>{ statusEl.textContent=''; }, 5000);
+}
+</script>
+
+<script>
+function openDrawer(){
+  document.getElementById('ham-drawer').classList.add('open');
+  document.getElementById('ham-overlay').classList.add('visible');
+  document.getElementById('ham-btn').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(){
+  document.getElementById('ham-drawer').classList.remove('open');
+  document.getElementById('ham-overlay').classList.remove('visible');
+  document.getElementById('ham-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDrawer(); });
+(function(){
+  var page = window.location.pathname.split('/').pop() || 'index.html';
+  var map = {
+    'index.html':'ham-hub', '':'ham-hub',
+    'leaderboard.html':'ham-leaderboard',
+    'redeem.html':'ham-redeem',
+    'myrep.html':'ham-myrep',
+    'roster.html':'ham-roster',
+    'dashboard.html':'ham-dashboard',
+    'brand-portal.html':'ham-portal',
+  };
+  var lbKeywords = ['leaderboard'];
+  var isLB = lbKeywords.some(function(k){ return page.includes(k); });
+  var activeId = isLB ? 'ham-leaderboard' : (map[page] || '');
+  if(activeId){ var el=document.getElementById(activeId); if(el) el.classList.add('active'); }
+  var shopEl = document.getElementById('ham-shop-name');
+  if(shopEl){
+    var sn = (typeof SHOP_NAME !== 'undefined') ? SHOP_NAME : '';
+    shopEl.textContent = sn;
+  }
+})();
+</script>
+
+</body>
+</html>

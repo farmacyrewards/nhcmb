@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Natural Healing Center — Redeem Your Points</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:  #1A3320;
+  --accent:   #C9A84C;
+  --bg:       #F5F0E8;
+  --surface:  #FFFFFF;
+  --border:   #D4CCBC;
+  --text:     #1A1A18;
+  --muted:    #6B7A72;
+  --purple:   #5B3F8A;
+  --purple-light: #F3F0FA;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* ── BANNER ── */
+.banner{
+  background:var(--primary);
+  background-image:linear-gradient(rgba(26,51,32,0.90),rgba(26,51,32,0.95));
+  padding:2rem 1.5rem 3rem;
+  text-align:center;
+  position:relative;
+}
+.banner::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;
+  height:32px;background:var(--bg);
+  clip-path:ellipse(55% 100% at 50% 100%);
+}
+.banner-logo{margin-bottom:1rem;display:flex;justify-content:center}
+.banner-logo img{height:64px;width:auto;filter:brightness(0) invert(1)}
+.banner-title{font-family:'DM Serif Display',serif;font-size:clamp(1.6rem,4vw,2.4rem);color:#fff;margin-bottom:6px}
+.banner-sub{font-size:13px;color:rgba(255,255,255,0.65)}
+.perennial-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:8px}
+
+/* ── PAGE ── */
+.page{max-width:560px;margin:0 auto;padding:1.5rem 1rem 3rem}
+
+/* ── TIERS ── */
+.tiers-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:.875rem}
+.tiers{display:flex;flex-direction:column;gap:8px;margin-bottom:1.75rem}
+.tier-option{display:none}
+.tier-label{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;cursor:pointer;transition:all .15s}
+.tier-option:checked + .tier-label{border-color:var(--purple);background:var(--purple-light)}
+.tier-emoji{font-size:22px;flex-shrink:0}
+.tier-info{flex:1}
+.tier-reward{font-size:14px;font-weight:600;color:var(--text)}
+.tier-pts{font-size:12px;color:var(--muted);margin-top:2px}
+.tier-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.tier-option:checked + .tier-label .tier-check{background:var(--purple);border-color:var(--purple)}
+.tier-check::after{content:'✓';font-size:11px;color:#fff;display:none}
+.tier-option:checked + .tier-label .tier-check::after{display:block}
+
+/* ── FORM ── */
+.form-section{margin-bottom:1.75rem}
+.form-label{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:.875rem;display:block}
+.form-group{margin-bottom:1rem}
+.field-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:block}
+.field-input{width:100%;padding:11px 14px;font-size:14px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.field-input:focus{border-color:var(--purple)}
+.field-input::placeholder{color:var(--muted)}
+
+/* ── POINTS NOTE ── */
+.points-note{background:var(--purple-light);border:1px solid rgba(91,63,138,0.2);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.75rem;font-size:13px;color:#5B3F8A;line-height:1.5}
+.points-note strong{display:block;font-size:14px;margin-bottom:3px;color:#2D1B69}
+
+/* ── SUBMIT ── */
+.submit-btn{width:100%;padding:14px;font-size:15px;font-weight:600;color:#fff;background:var(--purple);border:none;border-radius:12px;cursor:pointer;font-family:'Inter',sans-serif;transition:opacity .15s;margin-bottom:1rem}
+.submit-btn:hover{opacity:.88}
+.submit-btn:disabled{opacity:.5;cursor:not-allowed}
+.submit-note{font-size:12px;color:var(--muted);text-align:center;line-height:1.5}
+
+/* ── SUCCESS ── */
+.success-screen{display:none;text-align:center;padding:2rem 0}
+.success-icon{font-size:52px;margin-bottom:1rem}
+.success-title{font-family:'DM Serif Display',serif;font-size:1.8rem;color:var(--text);margin-bottom:.5rem}
+.success-sub{font-size:14px;color:var(--muted);line-height:1.6;max-width:380px;margin:0 auto 1.5rem}
+.success-detail{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem;font-size:13px;color:var(--muted);margin-bottom:1.5rem;text-align:left}
+.success-detail strong{color:var(--text);display:block;margin-bottom:3px}
+.back-btn{font-size:13px;color:var(--purple);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ── FOOTER ── */
+.page-footer{text-align:center;font-size:11px;color:var(--muted);margin-top:2rem;opacity:.6}
+
+@media(max-width:480px){
+  .banner{padding:1.5rem 1rem 2.5rem}
+}
+
+  /* ── Hamburger nav drawer ────────────────────────────── */
+  .ham-btn{position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.12);border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;z-index:200;transition:background .15s}
+  .ham-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-line{width:18px;height:2px;background:#fff;border-radius:2px;transition:all .25s}
+  .ham-btn.open .ham-line:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .ham-btn.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0)}
+  .ham-btn.open .ham-line:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .ham-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+  .ham-overlay.visible{opacity:1;pointer-events:all}
+  .ham-drawer{position:fixed;top:0;left:0;width:280px;height:100%;background:#fff;z-index:400;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,0.12)}
+  .ham-drawer.open{transform:translateX(0)}
+  .ham-drawer-header{background:var(--nav-primary,#1E2433);padding:1.25rem 1.25rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .ham-drawer-logo{font-family:'DM Serif Display',serif;font-size:18px;font-weight:600;color:#fff;display:flex;align-items:center;gap:6px}
+  .ham-drawer-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--nav-accent,#5BB8B4);flex-shrink:0}
+  .ham-drawer-shop{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px}
+  .ham-close-btn{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.1);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .ham-close-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-nav{flex:1;overflow-y:auto;padding:.75rem 0}
+  .ham-section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#9CA3AF;padding:.5rem 1.25rem .375rem;margin-top:.5rem}
+  .ham-nav-item{display:flex;align-items:center;gap:12px;padding:.875rem 1.25rem;text-decoration:none;color:#1A1A18;transition:background .12s;cursor:pointer;border:none;background:none;width:100%;font-family:inherit;text-align:left}
+  .ham-nav-item:hover{background:#F5F4F0}
+  .ham-nav-item.active{background:#F3F0FA;color:#5B3F8A}
+  .ham-nav-item.active .ham-nav-icon{background:#5B3F8A}
+  .ham-nav-icon{width:34px;height:34px;border-radius:9px;background:#1E2433;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .ham-nav-text{flex:1}
+  .ham-nav-label{font-size:14px;font-weight:500;color:inherit}
+  .ham-nav-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+  .ham-nav-badge{font-size:10px;font-weight:600;color:#5B3F8A;background:#F3F0FA;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .ham-nav-item.mgr-item .ham-nav-label{color:#5B3F8A}
+  .ham-divider{height:1px;background:#F0EEE8;margin:.5rem 0}
+  .ham-footer{padding:1rem 1.25rem;border-top:1px solid #F0EEE8;flex-shrink:0}
+  .ham-footer-brand{font-size:11px;color:#9CA3AF}
+  .ham-footer-brand span{color:#5B3F8A;font-weight:600}
+</style>
+</head>
+<body>
+<!-- Hamburger overlay + drawer -->
+<div class="ham-overlay" id="ham-overlay" onclick="closeDrawer()"></div>
+<div class="ham-drawer" id="ham-drawer">
+  <div class="ham-drawer-header">
+    <div>
+      <div class="ham-drawer-logo">Rewards Program</div>
+      <div class="ham-drawer-shop" id="ham-shop-name"></div>
+    </div>
+    <button class="ham-close-btn" onclick="closeDrawer()">X</button>
+  </div>
+  <nav class="ham-nav">
+    <div class="ham-section-label">Main</div>
+    <a class="ham-nav-item" id="ham-hub" href="index.html">
+      <div class="ham-nav-icon">&#127968;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-leaderboard" href="leaderboard.html">
+      <div class="ham-nav-icon">&#127942;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Leaderboard</div><div class="ham-nav-sub">Live team rankings</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-redeem" href="redeem.html">
+      <div class="ham-nav-icon">&#127873;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-myrep" href="myrep.html">
+      <div class="ham-nav-icon">&#11088;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
+    </a>
+    <div class="ham-divider"></div>
+    <div class="ham-section-label">Manager</div>
+    <a class="ham-nav-item mgr-item" id="ham-roster" href="roster.html">
+      <div class="ham-nav-icon">&#128101;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Roster</div><div class="ham-nav-sub">Manage reps &amp; notifications</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+    <a class="ham-nav-item mgr-item" id="ham-dashboard" href="dashboard.html">
+      <div class="ham-nav-icon">&#128202;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Dashboard</div><div class="ham-nav-sub">Performance reports</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+    <a class="ham-nav-item mgr-item" id="ham-portal" href="brand-portal.html">
+      <div class="ham-nav-icon">&#127807;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Brand Portal</div><div class="ham-nav-sub">GHF &amp; Plus read-only view</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+  </nav>
+  <div class="ham-footer">
+    <div class="ham-footer-brand">Shop Rewards Program</div>
+  </div>
+</div>
+
+
+<div class="banner" style="position:relative">
+  <button class="ham-btn" id="ham-btn" onclick="openDrawer()" aria-label="Open menu"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
+  <div class="banner-logo"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgMzgxLjUyIj48ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIj48ZyBpZD0iTGF5ZXJfMS0yIiBkYXRhLW5hbWU9IkxheWVyIDEiPjxwYXRoIGQ9Ik0zLjksMzYxLjA1djIwSDBWMzU1SDRsMTQuMTUsMTkuNVYzNTVoMy45djI2SDE4LjI5WiIvPjxwYXRoIGQ9Ik00OC4yLDM3NS42M0gzNS40NUwzMy4zNSwzODFoLTQuM2wxMC4zNC0yNmg0Ljg3TDU0LjYsMzgxSDUwLjMxWm0tMTEuNjItMy40N0g0Ny4wN2wtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNNjUuNCwzNTguNDNINTcuMzNWMzU1aDIwdjMuNDNoLThWMzgxSDY1LjRaIi8+PHBhdGggZD0iTTg1LjI5LDM1NWgzLjk0djE1LjcyYzAsNC40NCwyLjQ2LDcuMjksNyw3LjI5czctMi44NSw3LTcuMjlWMzU1aDMuOTR2MTUuOGMwLDYuNDctMy42MiwxMC42OC0xMC45MiwxMC42OHMtMTEtNC4yNS0xMS0xMC42NFoiLz48cGF0aCBkPSJNMTI1LjY2LDM3MWgtNC44N3YxMGgtMy45VjM1NWgxMWM1LDAsOC4zNSwzLjIsOC4zNSw4YTcuMjUsNy4yNSwwLDAsMS02LjQ3LDcuNkwxMzYuMzgsMzgxaC00LjUyWm0xLjY4LTEyLjU2aC02LjU1djkuMTNoNi41NWE0LjU3LDQuNTcsMCwxLDAsMC05LjEzWiIvPjxwYXRoIGQ9Ik0xNjEuMzUsMzc1LjYzSDE0OC41OWwtMi4xLDUuMzhIMTQyLjJsMTAuMzMtMjZoNC44OGwxMC4zMywyNmgtNC4yOVptLTExLjYzLTMuNDdoMTAuNDlMMTU1LDM1OC4zOVoiLz48cGF0aCBkPSJNMTc0Ljc2LDM1NWgzLjl2MjIuNThoMTEuODJWMzgxSDE3NC43NloiLz48cGF0aCBkPSJNMjMwLjkyLDM2OS4zOUgyMTYuNTNWMzgxaC0zLjlWMzU1aDMuOXYxMC45MmgxNC4zOVYzNTVoMy45djI2aC0zLjlaIi8+PHBhdGggZD0iTTI0NC41LDM1NUgyNjJ2My40M0gyNDguNFYzNjZoMTMuMjl2My40M0gyNDguNHY4LjExSDI2MlYzODFIMjQ0LjVaIi8+PHBhdGggZD0iTTI4Ny4yLDM3NS42M0gyNzQuNDVMMjcyLjM0LDM4MWgtNC4yOWwxMC4zNC0yNmg0Ljg3bDEwLjM0LDI2aC00LjI5Wm0tMTEuNjItMy40N2gxMC40OWwtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNMzAwLjYyLDM1NWgzLjl2MjIuNThoMTEuODFWMzgxSDMwMC42MloiLz48cGF0aCBkPSJNMzI0LjUzLDM1NWgzLjl2MjZoLTMuOVoiLz48cGF0aCBkPSJNMzQyLDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE2LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNMzgyLjI4LDM1NC41N2ExMi4yMSwxMi4yMSwwLDAsMSwxMC4zLDUuMTVsLTMuMTYsMS44M2E5LDksMCwwLDAtNy4xNC0zLjUxYy01LjQyLDAtOS40Nyw0LjE0LTkuNDcsMTBzNC4wNSwxMCw5LjQ3LDEwYTEwLjExLDEwLjExLDAsMCwwLDYuNi0yLjU3VjM3MC44aC04LjM1di0zLjQ0aDEyLjI1djkuNTZhMTMuODYsMTMuODYsMCwwLDEtMTAuNSw0LjZBMTMuMDksMTMuMDksMCwwLDEsMzY4Ljc5LDM2OEMzNjguNzksMzU5LjkxLDM3NC44NCwzNTQuNTcsMzgyLjI4LDM1NC41N1oiLz48cGF0aCBkPSJNNDE0LjU0LDM2OGExMywxMywwLDAsMSwxMy4zNC0xMy40NiwxMS43NywxMS43NywwLDAsMSwxMC4zMyw1LjVsLTMuMzEsMS43NmE4LjI0LDguMjQsMCwwLDAtNy0zLjc5Yy01LjI3LDAtOS4zMiw0LjE0LTkuMzIsMTBzNC4wNSwxMCw5LjMyLDEwYTguMjYsOC4yNiwwLDAsMCw3LTMuNzhsMy4zMSwxLjc1YTExLjgsMTEuOCwwLDAsMS0xMC4zMyw1LjVBMTMsMTMsMCwwLDEsNDE0LjU0LDM2OFoiLz48cGF0aCBkPSJNNDQ2LDM1NWgxNy40N3YzLjQzSDQ0OS45MVYzNjZoMTMuM3YzLjQzaC0xMy4zdjguMTFoMTMuNTdWMzgxSDQ0NloiLz48cGF0aCBkPSJNNDc2LjE2LDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE1LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNNTEwLjM2LDM1OC40M2gtOC4wN1YzNTVoMjB2My40M2gtOFYzODFoLTMuOVoiLz48cGF0aCBkPSJNNTMwLjI1LDM1NWgxNy40OHYzLjQzSDUzNC4xNlYzNjZoMTMuMjl2My40M0g1MzQuMTZ2OC4xMWgxMy41N1YzODFINTMwLjI1WiIvPjxwYXRoIGQ9Ik01NjUuMjgsMzcxSDU2MC40djEwaC0zLjlWMzU1aDExYzQuOTUsMCw4LjM1LDMuMiw4LjM1LDhhNy4yNSw3LjI1LDAsMCwxLTYuNDgsNy42TDU3NiwzODFoLTQuNTJaTTU2NywzNTguNDNINTYwLjR2OS4xM0g1NjdhNC41Nyw0LjU3LDAsMSwwLDAtOS4xM1oiLz48cGF0aCBkPSJNNTcwLDI1MC42NWE2LjcsNi43LDAsMCwwLTMtLjY2LDEzLjY1LDEzLjY1LDAsMCwwLTUuMjgsMS4zM0M1NTAuMjIsMjU3LDUxNS4xOCwyNzMuNyw0OTMsMjgxLjc2Yy0yMy4xNCw4LjM5LTMzLjM1LDEyLjE5LTQ4LjU0LDExYTgsOCwwLDAsMS03LjI1LTcuNjZxMC0xMi4xNSw5LjEyLTI4LjE0LDguNDQtMTQuNjcsMTgtMjMuNTIsMTAuMTctOS43OCwxOC42My05Ljc4YTEyLjM3LDEyLjM3LDAsMCwxLDksNGMyLDEuOTMsNC4wNSwyLjksNi4wOCwyLjlxNS44MiwwLDguMzItNS45NGE3LjUxLDcuNTEsMCwwLDAsLjUzLTIuNzgsOS4xNiw5LjE2LDAsMCwwLTIuMzgtNS44MXEtOS45LTEwLTIxLTEwYTM1LjgxLDM1LjgxLDAsMCwwLTEwLjE3LDEuNDVjLTUuMTgsMS40My0xMi4xNiw1LjQ2LTIwLjYxLDEzLjQ4YTEwNy4yNCwxMDcuMjQsMCwwLDAtMTcuMzksMjEuNDksMjEzLjQ3LDIxMy40NywwLDAsMS0yOC41OSwyNy43OXEtMjYuMTYsMjEuNTQtNDMuNiwyMS41NC0xMC4wNSwwLTE1LjkyLTQuODlhMzUuMSwzNS4xLDAsMCwxLTkuMzgtMTIuMzYsMTI3LjU3LDEyNy41NywwLDAsMS02LjE1LTE1Ljc5LDE0My45NCwxNDMuOTQsMCwwLDAtNS41NS0xNC40LDMyLjI1LDMyLjI1LDAsMCwwLTgtMTEuMXEtNS00LjM1LTEzLjE1LTQuMzYtMTQuNTQsMC0zMi4xMSwxNC44QTEzNSwxMzUsMCwwLDAsMjQ4LDI3MS4xNGwtLjEzLTcuMTRxMC0xMiwxLjA2LTI0LjA1LDE0LjY3LTI2LjI4LDQ4LjA5LTc0LjUyLDIzLTMyLjc2LDQzLjIxLTY1LjU0dDMwLjI2LTYzYTU3LjkyLDU3LjkyLDAsMCwwLDIuNzctMTYuMzlxMC05LjM3LTUuMTUtMTQuOTNUMzUyLjY0LDBhNjIuNDEsNjIuNDEsMCwwLDAtMTUuMzMsMi4yNVEyOTcuNTUsMTQsMjcwLjQ1LDc1LjQ1cS0yMS45Myw1MC0zMi43NiwxMTYuMjctNC4wOCwyNC43Ni01Ljc1LDQ2LjM1LTYuMzcsNy4xNC0xNC43OCwxNS4zN2EyMDcuNDIsMjA3LjQyLDAsMCwxLTMxLjIyLDI1LjIzcS0xNi41OSwxMC45LTMxLjExLDExLjcxLTkuMjYuMTItMTQuMy02LjA5YTQwLjcxLDQwLjcxLDAsMCwxLTcuNS0xNS45MiwxOTMuODEsMTkzLjgxLDAsMCwxLTQtMjAuNjIsMjM5LDIzOSwwLDAsMC00Ljc0LTIzLjQ5LDUyLjE1LDUyLjE1LDAsMCwwLTguODYtMTlxLTYtNy44MS0xNy4zNy0xMC4yMmEyOC40NiwyOC40NiwwLDAsMC01LjU4LS4yMnEtOC40My40Ni0xOS4xMyw3dC0yMi41LDE5YTMwNC41NywzMDQuNTcsMCwwLDAtMjEuNzksMjUuNzZjLjUyLTMuMjksMS4xLTYuNDYsMS43Mi05LjQ5YTEyLjkxLDEyLjkxLDAsMCwwLC4xMy0yLjUyLDcuMjEsNy4yMSwwLDAsMC0zLTUuNzMsOS41OSw5LjU5LDAsMCwwLTYuMjYtMS44MywyNi4yNSwyNi4yNSwwLDAsMC0zLjU0LjY2cS0yLjYxLjYxLTQsNi0zLjA4LDE2LTUuMzUsMzIuMzJDNy4yNywyNzUuMDYsMywyOTMuNzUsMywyOTQuOWE4LjQyLDguNDIsMCwwLDAsMi43Nyw1Ljg2QTguNzMsOC43MywwLDAsMCwxMi41NSwzMDNhNy44Miw3LjgyLDAsMCwwLDYuMjYtMy45MmMxMi42OS0yNy40MSwyMi44LTQxLjg0LDM4LjM5LTYwLjU1QzczLDIxOS41Nyw4My42NywyMTIuMjksOTIuMzgsMjExLjhhMTEuNjQsMTEuNjQsMCwwLDEsMi41Mi4xM3E4LjE3LDIuMDcsMTEuNzEsMTMuMTdhMTY1LjI2LDE2NS4yNiwwLDAsMSw1LjY5LDI2LjE2QTIwMi43NSwyMDIuNzUsMCwwLDAsMTE4LDI3OC42cTMuNTMsMTIuMywxMS44MiwxOS44NnQyNC41NSw3LjNxMTcuOC0xLDM2LTEyLjU5YTE5NC43OCwxOTQuNzgsMCwwLDAsMzMuODgtMjcuNDFjMi4yNy0yLjMsNC40NC00LjU1LDYuNTQtNi43OC0uMDcsMi45MS0uMTEsNS43OC0uMTEsOC41OXEwLDEuNTkuMDYsMTAuODR0My42NCwyM2MxLjQ5LDQuMTUsNC4xOCw2LjIxLDguMDUsNi4yMXE1LjU1LDAsOC40Ni02LjM0YTk5LjM5LDk5LjM5LDAsMCwxLDguNDYtMTZBMTQ0LjQ4LDE0NC40OCwwLDAsMSwyNzMsMjY3LjFhOTgsOTgsMCwwLDEsMTYuMTgtMTVxOC4zOS02LjA4LDE1Ljc5LTYuMDhjMi4yLDAsNCwxLjU3LDUuNDIsNC42OWE5OS40NCw5OS40NCwwLDAsMSw0LjI5LDExLjlxMi4xOSw3LjE5LDUuNDIsMTUuMTJhNjcuOCw2Ny44LDAsMCwwLDguNTIsMTUsNDEuNjIsNDEuNjIsMCwwLDAsMTMuNjEsMTEuNjNxOC4zMiw0LjU2LDIwLjg4LDQuNTYsMjIuMDcsMCw0OS4xNS0yMy4yNmMyLjg4LTIuNDgsNS43MS01LjA2LDguNDktNy43MWE1Myw1MywwLDAsMC0uNTcsNy40NXEwLDEwLjQ0LDUuMzYsMTYuODR0MTcuMjQsNi41NGExNTIuMSwxNTIuMSwwLDAsMCw1Ni4xNi0xMi40MmMyMy40NS05LjkyLDIyLjI0LTEwLjMxLDY5LjEtMzQuMzVxNS0yLjkxLDUtNi40OEE1LjE5LDUuMTksMCwwLDAsNTcwLDI1MC42NVpNMjgwLjUsOTUuNjdxMjQuODQtNjUuNjcsNjEuMTctNzdhMzMuNTQsMzMuNTQsMCwwLDEsOS4xMi0xLjcxcTUuNDEsMCw1LjQyLDUuNTVhMzMuNCwzMy40LDAsMCwxLTEuNzIsOXEtOC43MywyNy4zNS0zMS4xMiw2My4yM3QtNDUuNzgsNjkuNDNxLTEzLjc0LDE5LjgxLTI0LjE4LDM1LjY4QTUwNS43MSw1MDUuNzEsMCwwLDEsMjgwLjUsOTUuNjdaIi8+PC9nPjwvZz48L3N2Zz4=" alt="Natural Healing Center" style="height:64px;width:auto;filter:brightness(0) invert(1)"></div>
+  <div class="banner-title">Redeem Your Points</div>
+  <div class="banner-sub">Choose your reward below and submit your request</div>
+  <div class="perennial-tag">⭐ Powered by Shop Rewards</div>
+</div>
+
+<div class="page">
+
+  <!-- Success screen -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">🎉</div>
+    <div class="success-title">Request submitted!</div>
+    <div class="success-sub">Your manager has been notified and will reach out to fulfill your reward within 5–7 business days.</div>
+    <div class="success-detail" id="success-detail"></div>
+    <div class="back-btn" onclick="resetForm()">Submit another request</div>
+  </div>
+
+  <!-- Form -->
+  <div id="form-wrap">
+
+    <!-- Tier selection -->
+    <div class="tiers-label">1. Choose your reward</div>
+    <div class="tiers">
+      <input type="radio" name="tier" id="tier-1" class="tier-option" value="500|$5 Amazon Gift Card">
+      <label for="tier-1" class="tier-label">
+        <div class="tier-emoji">🎁</div>
+        <div class="tier-info"><div class="tier-reward">$5 Amazon Gift Card</div><div class="tier-pts">500 points</div></div>
+        <div class="tier-check"></div>
+      </label>
+
+      <input type="radio" name="tier" id="tier-2" class="tier-option" value="1000|$10 Amazon Gift Card">
+      <label for="tier-2" class="tier-label">
+        <div class="tier-emoji">🎁</div>
+        <div class="tier-info"><div class="tier-reward">$10 Amazon Gift Card</div><div class="tier-pts">1,000 points</div></div>
+        <div class="tier-check"></div>
+      </label>
+
+      <input type="radio" name="tier" id="tier-3" class="tier-option" value="2500|$25 Amazon Gift Card">
+      <label for="tier-3" class="tier-label">
+        <div class="tier-emoji">💳</div>
+        <div class="tier-info"><div class="tier-reward">$25 Amazon Gift Card</div><div class="tier-pts">2,500 points</div></div>
+        <div class="tier-check"></div>
+      </label>
+
+      <input type="radio" name="tier" id="tier-4" class="tier-option" value="5000|$50 Amazon Gift Card + Swag">
+      <label for="tier-4" class="tier-label">
+        <div class="tier-emoji">🏆</div>
+        <div class="tier-info"><div class="tier-reward">$50 Gift Card + Swag</div><div class="tier-pts">5,000 points</div></div>
+        <div class="tier-check"></div>
+      </label>
+    </div>
+
+    <!-- Rep info -->
+    <div class="form-section">
+      <div class="form-label">2. Your info</div>
+      <div class="form-group">
+        <label class="field-label" for="rep-name">Full name</label>
+        <input class="field-input" type="text" id="rep-name" placeholder="As it appears on the leaderboard">
+      </div>
+      <div class="form-group">
+        <label class="field-label" for="rep-email">Email address</label>
+        <input class="field-input" type="email" id="rep-email" placeholder="For gift card delivery">
+      </div>
+      <div class="form-group">
+        <label class="field-label" for="rep-shop">Your location</label>
+        <input class="field-input" type="text" id="rep-shop" placeholder="e.g. Natural Healing Center">
+      </div>
+    </div>
+
+    <!-- Points note -->
+    <div class="points-note">
+      <strong>📋 How redemptions work</strong>
+      Your manager will verify your points balance and fulfill your reward within 5–7 business days. Make sure your name matches exactly as it appears on the leaderboard.
+    </div>
+
+    <button class="submit-btn" id="submit-btn" onclick="submitRequest()">Submit redemption request</button>
+    <div class="submit-note">Your request is sent directly to your manager. Points are verified before fulfillment.</div>
+
+  </div><!-- /form-wrap -->
+
+  <div class="page-footer">Natural Healing Center · Rewards Program · Internal use only</div>
+</div>
+
+<script>
+// ── CONFIG — set your manager email here ──────────────────────
+const MANAGER_EMAIL = 'YOUR_EMAIL_HERE'; // e.g. 'jordan@example.com'
+const SHOP_NAME = 'Natural Healing Center';
+// ─────────────────────────────────────────────────────────────
+
+function submitRequest(){
+  const tier = document.querySelector('input[name="tier"]:checked');
+  const name  = document.getElementById('rep-name').value.trim();
+  const email = document.getElementById('rep-email').value.trim();
+  const shop  = document.getElementById('rep-shop').value.trim();
+
+  if(!tier)  { alert('Please select a reward tier.'); return; }
+  if(!name)  { alert('Please enter your name.'); return; }
+  if(!email) { alert('Please enter your email.'); return; }
+  if(!shop)  { alert('Please enter your location.'); return; }
+
+  const [pts, reward] = tier.value.split('|');
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Sending...';
+
+  // Build mailto link as primary delivery method
+  // (replace with a form service like Formspree for production)
+  const subject = encodeURIComponent('Rewards Redemption Request — ' + name + ' — ' + reward);
+  const body = encodeURIComponent(
+    'REWARDS REDEMPTION REQUEST\n\n' +
+    'Rep Name: ' + name + '\n' +
+    'Email: ' + email + '\n' +
+    'Location: ' + shop + '\n' +
+    'Reward: ' + reward + '\n' +
+    'Points Required: ' + parseInt(pts).toLocaleString() + '\n\n' +
+    'Please verify points balance and fulfill within 5-7 business days.\n\n' +
+    '-- Sent via Rewards Program --'
+  );
+
+  // Open mailto (works without a backend)
+  window.location.href = 'mailto:' + MANAGER_EMAIL + '?subject=' + subject + '&body=' + body;
+
+  // Show success after short delay
+  setTimeout(() => {
+    document.getElementById('form-wrap').style.display = 'none';
+    document.getElementById('success-screen').style.display = 'block';
+    document.getElementById('success-detail').innerHTML =
+      '<strong>Your request details</strong>' +
+      'Name: ' + name + '<br>' +
+      'Email: ' + email + '<br>' +
+      'Location: ' + shop + '<br>' +
+      'Reward: ' + reward + '<br>' +
+      'Points required: ' + parseInt(pts).toLocaleString();
+    btn.disabled = false;
+    btn.textContent = 'Submit redemption request';
+  }, 800);
+}
+
+function resetForm(){
+  document.getElementById('form-wrap').style.display = 'block';
+  document.getElementById('success-screen').style.display = 'none';
+  document.querySelectorAll('input[name="tier"]').forEach(r=>r.checked=false);
+  ['rep-name','rep-email','rep-shop'].forEach(id=>document.getElementById(id).value='');
+}
+</script>
+
+<script>
+function openDrawer(){
+  document.getElementById('ham-drawer').classList.add('open');
+  document.getElementById('ham-overlay').classList.add('visible');
+  document.getElementById('ham-btn').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(){
+  document.getElementById('ham-drawer').classList.remove('open');
+  document.getElementById('ham-overlay').classList.remove('visible');
+  document.getElementById('ham-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDrawer(); });
+(function(){
+  var page = window.location.pathname.split('/').pop() || 'index.html';
+  var map = {
+    'index.html':'ham-hub', '':'ham-hub',
+    'leaderboard.html':'ham-leaderboard',
+    'redeem.html':'ham-redeem',
+    'myrep.html':'ham-myrep',
+    'roster.html':'ham-roster',
+    'dashboard.html':'ham-dashboard',
+    'brand-portal.html':'ham-portal',
+  };
+  var lbKeywords = ['leaderboard'];
+  var isLB = lbKeywords.some(function(k){ return page.includes(k); });
+  var activeId = isLB ? 'ham-leaderboard' : (map[page] || '');
+  if(activeId){ var el=document.getElementById(activeId); if(el) el.classList.add('active'); }
+  var shopEl = document.getElementById('ham-shop-name');
+  if(shopEl){
+    var sn = (typeof SHOP_NAME !== 'undefined') ? SHOP_NAME : '';
+    shopEl.textContent = sn;
+  }
+})();
+</script>
+
+</body>
+</html>

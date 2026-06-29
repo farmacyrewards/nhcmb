@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perennial — Brand Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0C0F0A;--panel:#141812;--surface:#1C2118;--border:rgba(255,255,255,0.08);--cream:#F5F0E8;--muted:#7A8A78;--purple:#5B3F8A;--purple-light:rgba(91,63,138,0.15);--green:#2ECC71;--green-dim:rgba(46,204,113,0.12);--ghf:#10B981;--plus:#8B5CF6;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--cream);min-height:100vh;-webkit-font-smoothing:antialiased}
+.login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:2.5rem 2rem;max-width:420px;width:100%;text-align:center}
+.login-logo{font-family:'DM Serif Display',serif;font-size:28px;color:var(--cream);margin-bottom:4px}
+.login-logo span{color:var(--purple)}
+.login-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:1.5rem;font-weight:600}
+.login-title{font-family:'DM Serif Display',serif;font-size:1.4rem;color:var(--cream);margin-bottom:6px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:2rem;line-height:1.5}
+.login-field{margin-bottom:1rem;text-align:left}
+.login-label{font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.login-input{width:100%;padding:11px 14px;font-size:14px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--cream);font-family:'Inter',sans-serif;outline:none;transition:border-color .15s}
+.login-input:focus{border-color:var(--purple)}
+.login-input.err{border-color:#EF4444;animation:shake .3s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.login-error{font-size:12px;color:#EF4444;margin-bottom:.75rem;min-height:16px;text-align:left}
+.login-btn{width:100%;padding:12px;font-size:14px;font-weight:600;color:var(--cream);background:var(--purple);border:none;border-radius:10px;cursor:pointer;font-family:'Inter',sans-serif;margin-top:.25rem}
+.login-btn:hover{opacity:.88}
+.login-note{font-size:11px;color:var(--muted);margin-top:1rem}
+.portal-nav{position:sticky;top:0;z-index:50;background:rgba(12,15,10,0.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.875rem 2rem;display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-logo-word{font-family:'DM Serif Display',serif;font-size:18px;color:var(--cream)}
+.nav-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);display:inline-block;margin-bottom:2px}
+.nav-tag{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.brand-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.brand-btn{padding:6px 18px;font-size:13px;font-weight:600;border-radius:7px;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;color:var(--muted);background:transparent}
+.brand-btn.ghf.active{background:var(--ghf);color:#fff}
+.brand-btn.plus.active{background:var(--plus);color:#fff}
+.nav-user{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.logout-btn{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:5px 12px;border-radius:7px;cursor:pointer}
+.portal{display:none;padding-bottom:4rem}
+.portal-loading{text-align:center;padding:4rem 2rem;color:var(--muted);font-size:13px}
+.hero-section{padding:2.5rem 2rem 1.5rem;max-width:1100px;margin:0 auto}
+.hero-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-bottom:.75rem;font-weight:600}
+.hero-eyebrow.ghf{color:var(--ghf)}.hero-eyebrow.plus{color:var(--plus)}
+.hero-title{font-family:'DM Serif Display',serif;font-size:clamp(1.8rem,4vw,2.8rem);color:var(--cream);line-height:1.1;margin-bottom:.5rem}
+.hero-title .ghf{font-style:italic;color:var(--ghf)}.hero-title .plus{font-style:italic;color:var(--plus)}
+.hero-meta{font-size:13px;color:var(--muted);margin-bottom:2rem}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:2rem}
+.kpi-card{background:var(--panel);padding:1.5rem}
+.kpi-eye{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;font-weight:600}
+.kpi-num{font-family:'DM Serif Display',serif;font-size:2.2rem;font-weight:300;color:var(--cream);line-height:1;margin-bottom:.375rem}
+.kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;color:var(--green);background:var(--green-dim)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+.section{padding:0 2rem 2rem;max-width:1100px;margin:0 auto}
+.sec-eye{font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;font-weight:600}
+.sec-eye.ghf{color:var(--ghf)}.sec-eye.plus{color:var(--plus)}
+.sec-title{font-family:'DM Serif Display',serif;font-size:1.3rem;color:var(--cream);margin-bottom:.5rem}
+.sec-desc{font-size:13px;color:var(--muted);margin-bottom:1.25rem}
+.divider{border:none;border-top:1px solid var(--border);margin:0 2rem 2rem}
+.loc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:1.5rem}
+.loc-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.loc-name{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:1rem;display:flex;align-items:center;gap:6px}
+.loc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.loc-dot.ghf{background:var(--ghf)}.loc-dot.plus{background:var(--plus)}
+.loc-stat{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.loc-sl{font-size:12px;color:var(--muted)}.loc-sv{font-size:13px;font-weight:600;color:var(--cream)}
+.loc-top{margin-top:.875rem;padding-top:.875rem;border-top:1px solid var(--border)}
+.loc-tl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.loc-tn{font-size:13px;font-weight:600;color:var(--cream)}
+.trend-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.5rem}
+.trend-bars{display:flex;align-items:flex-end;gap:10px;height:120px}
+.trend-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.trend-bar{width:100%;max-width:40px;border-radius:4px 4px 0 0;min-height:3px}
+.trend-bar.ghf{background:var(--ghf)}.trend-bar.plus{background:var(--plus)}
+.trend-bar.prev{background:var(--surface);border:1px solid rgba(255,255,255,0.1)}
+.trend-lbl{font-size:10px;color:var(--muted);text-align:center}
+.trend-lbl.launch{color:var(--purple);font-weight:600}
+.rep-table{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.rep-thead{display:grid;grid-template-columns:44px 1fr 100px 100px 80px;padding:9px 16px;font-size:10px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);background:rgba(255,255,255,0.02)}
+.rep-row{display:grid;grid-template-columns:44px 1fr 100px 100px 80px;padding:11px 16px;align-items:center;border-bottom:1px solid rgba(255,255,255,0.04)}
+.rep-row:last-child{border-bottom:none}
+.rep-row.hl{background:rgba(255,255,255,0.03)}
+.rep-rank{font-size:13px;font-weight:600;text-align:center;color:var(--cream)}
+.rep-info{display:flex;align-items:center;gap:8px}
+.rep-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.rep-nm{font-size:13px;font-weight:500;color:var(--cream)}
+.rep-vl{font-size:13px;font-weight:600;text-align:right}
+.rep-vl.ghf{color:var(--ghf)}.rep-vl.plus{color:var(--plus)}
+.rep-sub{font-size:11px;color:var(--muted);text-align:right}
+.rep-pts{font-size:12px;color:var(--purple);font-weight:600;text-align:right}
+.portal-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:1100px;margin:0 auto}
+.footer-logo{font-family:'DM Serif Display',serif;font-size:14px;color:var(--muted)}
+.footer-logo span{color:var(--purple)}
+.footer-note{font-size:11px;color:var(--muted)}
+@media(max-width:680px){.rep-thead,.rep-row{grid-template-columns:36px 1fr 80px 80px}.kpi-num{font-size:1.7rem}.hero-section,.section{padding-left:1rem;padding-right:1rem}.divider{margin-left:1rem;margin-right:1rem}}
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Perennial<span>.</span></div>
+    <div class="login-eyebrow">Brand Portal</div>
+    <div class="login-title">Welcome back</div>
+    <div class="login-sub">Sign in to view your brand performance across all Perennial partner locations.</div>
+    <div class="login-field">
+      <label class="login-label">Email</label>
+      <input class="login-input" type="email" id="login-email" placeholder="you@yourbrand.com">
+    </div>
+    <div class="login-field">
+      <label class="login-label">Password</label>
+      <input class="login-input" type="password" id="login-pw" placeholder="••••••••">
+    </div>
+    <div class="login-error" id="login-error"></div>
+    <button class="login-btn" onclick="doLogin()">Sign in</button>
+    <div class="login-note">Access is provided by your Perennial account manager.</div>
+  </div>
+</div>
+
+<nav class="portal-nav" id="portal-nav">
+  <div class="nav-left">
+    <div style="display:flex;align-items:baseline;gap:6px">
+      <div class="nav-logo-word">Perennial</div>
+      <div class="nav-dot"></div>
+    </div>
+    <div class="nav-tag">Brand Portal</div>
+  </div>
+  <div class="brand-toggle">
+    <button class="brand-btn ghf active" id="btn-ghf" onclick="switchBrand('ghf')">&#127807; GHF</button>
+    <button class="brand-btn plus" id="btn-plus" onclick="switchBrand('plus')">&#128995; Plus</button>
+  </div>
+  <div class="nav-user">
+    <span id="nav-email"></span>
+    <button class="logout-btn" onclick="doLogout()">Sign out</button>
+  </div>
+</nav>
+
+<div class="portal" id="portal">
+  <div class="portal-loading" id="portal-loading">Loading your brand data...</div>
+  <div id="portal-content" style="display:none"></div>
+</div>
+
+<script>
+// ================================================================
+// BRAND CREDENTIALS — update as needed
+// ================================================================
+const CREDS = {
+  'ghf@glasshousefarms.com':  { pw: 'GHF_PORTAL_2026',  brand: 'ghf',  name: 'Glass House Farms' },
+  'plus@plusproducts.com':    { pw: 'PLUS_PORTAL_2026', brand: 'plus', name: 'Plus Products' },
+};
+// ================================================================
+
+const BASELINE = { ghf:1188, plus:842 };
+const TREND = [
+  {m:'Jan',ghf:1120,plus:780,on:false},
+  {m:'Feb',ghf:1145,plus:800,on:false},
+  {m:'Mar',ghf:1188,plus:842,on:false},
+  {m:'Apr',ghf:1298,plus:912,on:true},
+  {m:'May',ghf:1421,plus:988,on:true},
+  {m:'Jun',ghf:1565,plus:1101,on:true},
+];
+const COLORS=['#10B981','#8B5CF6','#C9A84C','#5BB8B4','#E05252','#5B3F8A','#F59E0B','#14B8A6'];
+const ini  = n => n.split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+const rl   = i => i===0?'1st':i===1?'2nd':i===2?'3rd':(i+1)+'th';
+const fmtK = v => v>=1000 ? '$'+(v/1000).toFixed(1)+'K' : '$'+Math.round(v);
+const medal= i => i===0?'&#129351;':i===1?'&#129352;':i===2?'&#129353;':i+1;
+
+let activeBrand = 'ghf';
+let cachedData  = {};
+
+function doLogin(){
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pw    = document.getElementById('login-pw').value;
+  const err   = document.getElementById('login-error');
+  const cred  = CREDS[email];
+  if(!cred || cred.pw !== pw){
+    err.textContent = 'Incorrect email or password.';
+    const i = document.getElementById('login-pw');
+    i.classList.add('err'); i.value='';
+    setTimeout(()=>i.classList.remove('err'),400);
+    return;
+  }
+  activeBrand = cred.brand;
+  document.getElementById('nav-email').textContent = email;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('portal-nav').style.display   = 'flex';
+  document.getElementById('portal').style.display       = 'block';
+  updateToggle();
+  if(typeof window.loadBrandData === 'function') window.loadBrandData(activeBrand);
+}
+
+function doLogout(){
+  cachedData={};
+  document.getElementById('login-screen').style.display      ='flex';
+  document.getElementById('portal-nav').style.display        ='none';
+  document.getElementById('portal').style.display            ='none';
+  document.getElementById('portal-content').style.display    ='none';
+  document.getElementById('portal-loading').style.display    ='block';
+  document.getElementById('portal-content').innerHTML        ='';
+  document.getElementById('login-email').value='';
+  document.getElementById('login-pw').value='';
+  document.getElementById('login-error').textContent='';
+}
+
+function switchBrand(b){
+  activeBrand=b; updateToggle(); window.renderPortal(b,cachedData);
+}
+function updateToggle(){
+  document.getElementById('btn-ghf').classList.toggle('active',activeBrand==='ghf');
+  document.getElementById('btn-plus').classList.toggle('active',activeBrand==='plus');
+}
+
+document.getElementById('login-email').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+
+window.renderPortal = function(brand, data){
+  cachedData = data;
+  document.getElementById('portal-loading').style.display='none';
+  const isGHF = brand==='ghf';
+  const ac    = isGHF?'ghf':'plus';
+  const bname = isGHF?'Glass House Farms':'Plus Products';
+  const uk    = isGHF?'ghf':'plus';
+  const bl    = isGHF?BASELINE.ghf:BASELINE.plus;
+
+  let totalU=0, totalS=0, allReps=[], locs=[];
+  for(const[k,d] of Object.entries(data)){
+    if(!d.liveData) continue;
+    const ld=d.liveData;
+    const T=ld.txn||[], S=ld.sales||[], B=ld[uk]||[], P=ld.points||[];
+    const lu=B.reduce((s,r)=>s+(r.units||r[uk]||0),0);
+    const ls=S.reduce((s,r)=>s+r.sales,0);
+    totalU+=lu; totalS+=ls;
+    locs.push({label:d.location||k,units:lu,sales:Math.round(ls),txn:T.reduce((s,r)=>s+r.txn,0),topRep:B[0]?B[0].name:'—',topVal:B[0]?(B[0].units||B[0][uk]||0):0});
+    T.forEach(r=>{
+      const br=B.find(x=>x.name===r.name)||{};
+      const sr=S.find(x=>x.name===r.name)||{sales:0};
+      const pr=P.find(x=>x.name===r.name)||{monthlyPts:0};
+      const u=br.units||br[uk]||0;
+      const ex=allReps.find(x=>x.name===r.name);
+      if(ex){ex.units+=u;ex.sales+=sr.sales||0;ex.pts+=pr.monthlyPts||0;}
+      else allReps.push({name:r.name,units:u,sales:sr.sales||0,pts:pr.monthlyPts||0});
+    });
+  }
+  allReps.sort((a,b)=>b.units-a.units);
+  const lift = bl>0?((totalU-bl)/bl*100).toFixed(1):'0';
+  const upd  = Object.values(data)[0]?.updatedAt||'Current period';
+
+  let o = '';
+
+  // KPIs
+  o += '<div class="hero-section">'
+    +'<div class="hero-eyebrow '+ac+'">'+bname+' &middot; Perennial Partner Report</div>'
+    +'<h1 class="hero-title">'+(isGHF?'Your product is <span class="ghf">moving.</span>':'Your brand is <span class="plus">winning.</span>')+'</h1>'
+    +'<div class="hero-meta">Period: '+upd+' &middot; '+locs.length+' location'+(locs.length!==1?'s':'')+'</div>'
+    +'<div class="kpi-grid">'
+    +'<div class="kpi-card"><div class="kpi-eye">'+bname+' Units</div><div class="kpi-num">'+totalU.toLocaleString()+'</div><div class="kpi-delta">+'+lift+'% vs baseline</div><div class="kpi-sub">vs '+bl.toLocaleString()+' pre-program</div></div>'
+    +'<div class="kpi-card"><div class="kpi-eye">Net Sales</div><div class="kpi-num">'+fmtK(totalS)+'</div><div class="kpi-sub">Across '+locs.length+' location'+(locs.length!==1?'s':'')+'</div></div>'
+    +'<div class="kpi-card"><div class="kpi-eye">Avg Units/Rep</div><div class="kpi-num">'+(allReps.length>0?Math.round(totalU/allReps.length):'—')+'</div><div class="kpi-sub">Across '+allReps.length+' reps</div></div>'
+    +'<div class="kpi-card"><div class="kpi-eye">Points Driving Advocacy</div><div class="kpi-num">'+(totalU*5).toLocaleString()+'</div><div class="kpi-sub">5 pts per unit sold</div></div>'
+    +'</div></div>';
+
+  // Locations
+  o += '<hr class="divider"><div class="section"><div class="sec-eye '+ac+'">Location Breakdown</div><div class="sec-title">Performance by shop</div><div class="sec-desc">How each partner location is performing for '+bname+'</div><div class="loc-grid">';
+  locs.forEach(loc=>{
+    o += '<div class="loc-card"><div class="loc-name"><div class="loc-dot '+ac+'"></div>'+loc.label+'</div>'
+      +'<div class="loc-stat"><span class="loc-sl">Units</span><span class="loc-sv">'+loc.units.toLocaleString()+'</span></div>'
+      +'<div class="loc-stat"><span class="loc-sl">Net Sales</span><span class="loc-sv">'+fmtK(loc.sales)+'</span></div>'
+      +'<div class="loc-stat"><span class="loc-sl">Transactions</span><span class="loc-sv">'+loc.txn.toLocaleString()+'</span></div>'
+      +'<div class="loc-stat"><span class="loc-sl">Points Earned</span><span class="loc-sv">'+(loc.units*5).toLocaleString()+'</span></div>'
+      +'<div class="loc-top"><div class="loc-tl">Top rep</div><div class="loc-tn">'+loc.topRep+(loc.topVal?' &middot; '+loc.topVal+' units':'')+'</div></div></div>';
+  });
+  o += '</div></div>';
+
+  // Trend
+  const mx=Math.max(...TREND.map(t=>isGHF?t.ghf:t.plus));
+  let fl=true;
+  o += '<hr class="divider"><div class="section"><div class="sec-eye '+ac+'">Growth Trend</div><div class="sec-title">Units since Perennial launched</div><div class="sec-desc">Gray = pre-program &middot; Colored = Perennial active</div><div class="trend-wrap"><div class="trend-bars">';
+  TREND.forEach(t=>{
+    const v=isGHF?t.ghf:t.plus;
+    const h=Math.round(v/mx*100);
+    const launch=t.on&&fl;
+    if(t.on)fl=false;
+    o += '<div class="trend-col"><div class="trend-bar '+(t.on?ac:'prev')+'" style="height:'+h+'px"></div><div class="trend-lbl'+(t.on?' launch':'')+'">'+t.m+(launch?' &#128640;':'')+'</div></div>';
+  });
+  o += '</div></div></div>';
+
+  // Rep table
+  o += '<hr class="divider"><div class="section"><div class="sec-eye '+ac+'">Rep Performance</div><div class="sec-title">Top '+bname+' sellers</div><div class="sec-desc">Ranked by units this period across all locations</div>'
+    +'<div class="rep-table"><div class="rep-thead"><div style="text-align:center">#</div><div>Rep</div><div style="text-align:right">'+(isGHF?'GHF':'Plus')+' Units</div><div style="text-align:right">Net Sales</div><div style="text-align:right">Pts</div></div>';
+  allReps.slice(0,12).forEach((r,i)=>{
+    const c=COLORS[i%COLORS.length];
+    o += '<div class="rep-row'+(i===0?' hl':'')+'"><div class="rep-rank">'+medal(i)+'</div>'
+      +'<div class="rep-info"><div class="rep-av" style="background:'+c+'22;color:'+c+'">'+ini(r.name)+'</div><div class="rep-nm">'+r.name+'</div></div>'
+      +'<div class="rep-vl '+ac+'">'+r.units.toLocaleString()+'</div>'
+      +'<div class="rep-sub">'+fmtK(r.sales)+'</div>'
+      +'<div class="rep-pts">'+(r.units*5).toLocaleString()+'</div></div>';
+  });
+  o += '</div></div>';
+
+  // Footer
+  o += '<div class="portal-footer"><div class="footer-logo">Perennial<span>.</span></div><div class="footer-note">'+bname+' &middot; Confidential &middot; '+upd+'</div></div>';
+
+  document.getElementById('portal-content').innerHTML = o;
+  document.getElementById('portal-content').style.display = 'block';
+};
+</script>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const configs = {
+  fsb: { label:'Farmacy SB', apiKey:'AIzaSyCuJFGrsfmZQwNJtR4RxFwEv2f-dqGCLwc', authDomain:'farmacyrewards.firebaseapp.com', databaseURL:'https://farmacyrewards-default-rtdb.firebaseio.com', projectId:'farmacyrewards', storageBucket:'farmacyrewards.firebasestorage.app', messagingSenderId:'455717273109', appId:'1:455717273109:web:fb59aed853532bae12181c' },
+};
+
+const dbs = {};
+for(const [key,cfg] of Object.entries(configs)){
+  dbs[key] = getDatabase(initializeApp(cfg, key));
+}
+
+window.loadBrandData = async function(brand){
+  const results = {};
+  for(const [key,db] of Object.entries(dbs)){
+    try{
+      const snap = await get(ref(db,'leaderboard'));
+      if(snap.exists()) results[key] = {...snap.val(), location: configs[key].label};
+    }catch(e){ console.error(key, e); }
+  }
+  window.renderPortal(brand, results);
+};
+</script>
+</body>
+</html>

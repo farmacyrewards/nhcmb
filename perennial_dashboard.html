@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perennial — Performance Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --ink:     #0C0F0A;
+  --panel:   #141812;
+  --surface: #1C2118;
+  --border:  rgba(255,255,255,0.08);
+  --cream:   #F5F0E8;
+  --muted:   #8A9280;
+  --purple:  #5B3F8A;
+  --purple-light: rgba(91,63,138,0.15);
+  --green:   #2ECC71;
+  --green-dim: rgba(46,204,113,0.12);
+  --gold:    #C9A84C;
+  --teal:    #5BB8B4;
+  --red:     #E05252;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',sans-serif;background:var(--ink);color:var(--cream);min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── NAV ── */
+.nav{position:sticky;top:0;z-index:50;background:rgba(12,15,10,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:.875rem 2rem;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.nav-logo{display:flex;align-items:baseline;gap:6px}
+.nav-logo-word{font-family:'Fraunces',serif;font-size:18px;font-weight:600;color:var(--cream)}
+.nav-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--purple);margin-bottom:3px}
+.nav-meta{font-size:12px;color:var(--muted)}
+.nav-toggle{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.toggle-btn{padding:6px 16px;font-size:12px;font-weight:500;border-radius:7px;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;color:var(--muted);background:transparent}
+.toggle-btn.active{background:var(--purple);color:var(--cream)}
+.nav-period{font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:6px 14px;border-radius:8px}
+
+/* ── UPLOAD STATE ── */
+.upload-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.upload-card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:3rem;max-width:480px;width:100%;text-align:center}
+.upload-logo{font-family:'Fraunces',serif;font-size:28px;font-weight:600;color:var(--cream);margin-bottom:4px}
+.upload-logo span{color:var(--purple)}
+.upload-sub{font-size:14px;color:var(--muted);margin-bottom:2rem;line-height:1.5}
+.upload-zone{border:1.5px dashed rgba(91,63,138,0.4);border-radius:14px;padding:2.5rem 1.5rem;cursor:pointer;transition:all .2s;position:relative;margin-bottom:1rem}
+.upload-zone:hover{border-color:var(--purple);background:var(--purple-light)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone-icon{font-size:32px;margin-bottom:10px}
+.upload-zone-label{font-size:14px;font-weight:500;color:var(--cream);margin-bottom:4px}
+.upload-zone-hint{font-size:12px;color:var(--muted)}
+.upload-demo{font-size:12px;color:var(--purple);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+/* ── DASHBOARD ── */
+.dashboard{display:none;padding-bottom:4rem}
+.section{padding:2rem;max-width:1100px;margin:0 auto}
+
+/* ── HERO KPIS ── */
+.hero-section{padding:2.5rem 2rem 1.5rem;max-width:1100px;margin:0 auto}
+.hero-eyebrow{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:.75rem;font-weight:600}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:600;color:var(--cream);line-height:1.1;margin-bottom:.5rem}
+.hero-title em{font-style:italic;color:var(--purple)}
+.hero-desc{font-size:14px;color:var(--muted);max-width:560px;line-height:1.6;margin-bottom:2rem}
+
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.kpi-card{background:var(--panel);padding:1.5rem}
+.kpi-eyebrow{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;font-weight:600}
+.kpi-num{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:300;color:var(--cream);line-height:1;margin-bottom:.375rem}
+.kpi-delta{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px}
+.kpi-delta.up{color:var(--green);background:var(--green-dim)}
+.kpi-delta.neutral{color:var(--muted);background:var(--surface)}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* ── SECTION HEADERS ── */
+.sec-header{margin-bottom:1.5rem}
+.sec-eyebrow{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:4px;font-weight:600}
+.sec-title{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:600;color:var(--cream)}
+.sec-desc{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* ── DIVIDER ── */
+.divider{border:none;border-top:1px solid var(--border);margin:0 2rem}
+
+/* ── LIFT CHART ── */
+.chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.5rem;overflow:hidden}
+.chart-legend{display:flex;gap:16px;margin-bottom:1.25rem;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.bar-chart{display:flex;flex-direction:column;gap:14px}
+.bar-row{display:grid;grid-template-columns:110px 1fr 70px;align-items:center;gap:12px}
+.bar-label{font-size:12px;color:var(--muted);text-align:right;line-height:1.3}
+.bar-track{height:28px;background:var(--surface);border-radius:6px;overflow:hidden;position:relative;display:flex}
+.bar-fill-before{height:100%;border-radius:6px 0 0 6px;background:var(--surface);border:1px solid rgba(255,255,255,0.1);transition:width 1s ease}
+.bar-fill-after{height:100%;background:var(--purple);border-radius:6px;transition:width 1s ease;position:absolute;left:0;top:0}
+.bar-fill-after.green{background:linear-gradient(90deg,var(--purple),var(--green))}
+.bar-val{font-family:'Fraunces',serif;font-size:14px;font-weight:600;color:var(--cream);text-align:left}
+.bar-lift{font-size:11px;color:var(--green);font-weight:600}
+
+/* ── REP LEADERBOARD ── */
+.rep-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.rep-list{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.rep-list-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.rep-item{display:flex;align-items:center;gap:10px;padding:.875rem 1.25rem;border-bottom:1px solid var(--border)}
+.rep-item:last-child{border-bottom:none}
+.rep-item.first{background:linear-gradient(90deg,rgba(91,63,138,0.1),transparent)}
+.rep-rank-num{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--muted);min-width:24px;text-align:center}
+.rep-avatar-sm{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+.rep-name-sm{font-size:13px;font-weight:500;color:var(--cream);flex:1}
+.rep-bar-wrap{flex:1;display:flex;align-items:center;gap:8px}
+.rep-bar-bg{flex:1;height:5px;background:var(--surface);border-radius:3px;overflow:hidden}
+.rep-bar-fg{height:100%;border-radius:3px;background:var(--purple);transition:width 1s ease}
+.rep-bar-fg.gold{background:var(--gold)}
+.rep-val-sm{font-size:12px;font-weight:600;color:var(--cream);min-width:44px;text-align:right}
+
+/* ── POINTS TIERS ── */
+.tiers-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.tier-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.25rem}
+.tier-card.unlocked{border-color:rgba(91,63,138,0.4);background:linear-gradient(135deg,rgba(91,63,138,0.08),var(--panel))}
+.tier-emoji{font-size:22px;margin-bottom:.5rem}
+.tier-reward-name{font-size:14px;font-weight:600;color:var(--cream);margin-bottom:3px}
+.tier-pts-label{font-size:11px;color:var(--muted);margin-bottom:.75rem}
+.tier-prog-bg{height:5px;background:var(--surface);border-radius:3px;overflow:hidden;margin-bottom:6px}
+.tier-prog-fill{height:100%;border-radius:3px;background:var(--purple);transition:width 1s ease}
+.tier-prog-text{font-size:10px;color:var(--muted)}
+.tier-count{font-size:12px;font-weight:600;color:var(--purple);margin-top:8px}
+
+/* ── MONTHLY TREND ── */
+.trend-chart{display:flex;align-items:flex-end;gap:8px;height:140px;padding:0 4px}
+.trend-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.trend-bar-pair{display:flex;align-items:flex-end;gap:3px;width:100%;justify-content:center;flex:1}
+.trend-bar{width:14px;border-radius:3px 3px 0 0;transition:height .8s ease;min-height:2px}
+.trend-bar.before{background:var(--surface);border:1px solid rgba(255,255,255,0.1)}
+.trend-bar.after{background:var(--purple)}
+.trend-bar.after.current{background:linear-gradient(180deg,var(--green),var(--purple))}
+.trend-label{font-size:9px;color:var(--muted);text-align:center;white-space:nowrap}
+.trend-launched{font-size:9px;color:var(--purple);font-weight:600}
+
+/* ── FOOTER ── */
+.dash-footer{border-top:1px solid var(--border);padding:1.5rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;max-width:1100px;margin:0 auto}
+.footer-brand{font-family:'Fraunces',serif;font-size:14px;color:var(--muted)}
+.footer-brand span{color:var(--purple)}
+.footer-note{font-size:11px;color:var(--muted)}
+.print-btn{font-size:12px;font-weight:500;color:var(--cream);background:var(--surface);border:1px solid var(--border);padding:7px 16px;border-radius:8px;cursor:pointer}
+.print-btn:hover{border-color:var(--purple)}
+
+@media(max-width:700px){
+  .rep-grid{grid-template-columns:1fr}
+  .bar-row{grid-template-columns:80px 1fr 60px}
+  .kpi-num{font-size:1.8rem}
+  .nav{padding:.875rem 1rem}
+}
+@media print{
+  .nav,.upload-screen,.print-btn{display:none!important}
+  .dashboard{display:block!important}
+  body{background:#fff;color:#000}
+}
+</style>
+</head>
+<body>
+
+<!-- ── UPLOAD SCREEN ── -->
+<div class="upload-screen" id="upload-screen">
+  <div class="upload-card">
+    <div class="upload-logo">Perennial<span>.</span></div>
+    <p style="font-size:13px;color:#5B3F8A;letter-spacing:1px;text-transform:uppercase;font-weight:600;margin:4px 0 1rem">Performance Dashboard</p>
+    <p class="upload-sub">Upload your Perennial Excel export to generate a visual report for your brand or retailer meeting.</p>
+    <div class="upload-zone" id="upload-zone"
+      ondragover="event.preventDefault();this.style.borderColor='#5B3F8A'"
+      ondragleave="this.style.borderColor=''"
+      ondrop="event.preventDefault();this.style.borderColor='';handleUpload(event.dataTransfer.files[0])">
+      <input type="file" accept=".xlsx,.xls,.csv" onchange="handleUpload(this.files[0])">
+      <div class="upload-zone-icon">📊</div>
+      <div class="upload-zone-label">Drop your export here or click to browse</div>
+      <div class="upload-zone-hint">Perennial Brand or Retailer export (.xlsx or .csv)</div>
+    </div>
+    <div class="upload-demo" onclick="loadDemo()">Or load sample data to preview</div>
+  </div>
+</div>
+
+<!-- ── NAV ── -->
+<nav class="nav" id="main-nav" style="display:none">
+  <div class="nav-logo">
+    <div class="nav-logo-word">Perennial</div>
+    <div class="nav-logo-dot"></div>
+  </div>
+  <div class="nav-toggle">
+    <button class="toggle-btn active" id="btn-brand" onclick="setView('brand')">Brand View</button>
+    <button class="toggle-btn" id="btn-retailer" onclick="setView('retailer')">Retailer View</button>
+  </div>
+  <div class="nav-period" id="nav-period">June 2026</div>
+</nav>
+
+<!-- ── DASHBOARD ── -->
+<div class="dashboard" id="dashboard">
+
+  <!-- Hero KPIs -->
+  <div class="hero-section">
+    <div class="hero-eyebrow" id="hero-eyebrow">Brand Performance · Glass House Farms</div>
+    <h1 class="hero-title" id="hero-title">The program is <em>working.</em></h1>
+    <p class="hero-desc" id="hero-desc">Here's what Perennial delivered this period across all active locations.</p>
+    <div class="kpi-grid" id="kpi-grid"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Lift Chart -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-eyebrow">Before vs. After</div>
+      <div class="sec-title" id="lift-title">Unit sales lift since Perennial launched</div>
+      <div class="sec-desc" id="lift-desc">Comparing baseline (pre-program) to current period</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2)"></div>Baseline (pre-program)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#5B3F8A"></div>With Perennial</div>
+      </div>
+      <div class="bar-chart" id="lift-chart"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Monthly Trend -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-eyebrow">Monthly Trend</div>
+      <div class="sec-title">Growth since launch</div>
+      <div class="sec-desc">Gray = pre-program baseline · Purple = Perennial active</div>
+    </div>
+    <div class="chart-wrap">
+      <div class="trend-chart" id="trend-chart"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Rep Leaderboard -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-eyebrow">Staff Performance</div>
+      <div class="sec-title" id="rep-title">Rep leaderboard — this period</div>
+      <div class="sec-desc">Top performers driving program results</div>
+    </div>
+    <div class="rep-grid">
+      <div class="rep-list">
+        <div class="rep-list-header" id="rep-col1-header">By Brand Units</div>
+        <div id="rep-list-units"></div>
+      </div>
+      <div class="rep-list">
+        <div class="rep-list-header">By Net Sales</div>
+        <div id="rep-list-sales"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Points & Tiers -->
+  <div class="section">
+    <div class="sec-header">
+      <div class="sec-eyebrow">Perennial Points</div>
+      <div class="sec-title">Staff engagement & reward progress</div>
+      <div class="sec-desc">How many reps have unlocked each reward tier</div>
+    </div>
+    <div class="tiers-grid" id="tiers-grid"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Footer -->
+  <div class="dash-footer">
+    <div class="footer-brand">Perennial<span>.</span> Rewards Platform</div>
+    <div class="footer-note" id="footer-note">Data period: June 2026 · Confidential</div>
+    <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
+  </div>
+</div>
+
+<script>
+const COLORS = ['#5B3F8A','#2ECC71','#C9A84C','#5BB8B4','#E05252','#8B5CF6','#F59E0B','#14B8A6','#EC4899','#6366F1','#F97316','#06B6D4','#84CC16','#A855F7','#FB7185','#34D399'];
+const ini = n => n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+const fmtK = v => v>=1000 ? '$'+(v/1000).toFixed(1)+'K' : '$'+v.toFixed(0);
+const TIERS = [
+  {pts:500,  reward:'$5 Gift Card',  emoji:'🎁'},
+  {pts:1000, reward:'$10 Gift Card', emoji:'🎁'},
+  {pts:2500, reward:'$25 Gift Card', emoji:'💳'},
+  {pts:5000, reward:'$50 + Swag',   emoji:'🏆'},
+];
+
+let currentView = 'brand';
+let DATA = null;
+
+// ── Demo data ──────────────────────────────────────────────────
+const DEMO = {
+  shopName: 'Farmacy SB',
+  period: 'June 2026',
+  reps: [
+    {name:'Abe Samudio',      txn:843, sales:33159, ghf:192, plus:89,  monthlyPts:3471, allTimePts:9200},
+    {name:'Niklas Hladyniuk', txn:734, sales:29720, ghf:175, plus:136, monthlyPts:4270, allTimePts:11400},
+    {name:'Emma Nelson',      txn:749, sales:28463, ghf:172, plus:111, monthlyPts:3997, allTimePts:9800},
+    {name:'Rose Theriault',   txn:769, sales:30625, ghf:141, plus:138, monthlyPts:4687, allTimePts:10200},
+    {name:'Casey Gilbert',    txn:638, sales:23518, ghf:151, plus:83,  monthlyPts:2528, allTimePts:6800},
+    {name:'Cheroke Cunningham',txn:513,sales:23273, ghf:92,  plus:82,  monthlyPts:3600, allTimePts:7200},
+    {name:'Elena Lehne-Calzada',txn:504,sales:22151,ghf:90, plus:119, monthlyPts:3265, allTimePts:8100},
+    {name:'Zachary Tognotti', txn:446, sales:15311, ghf:88,  plus:59,  monthlyPts:1086, allTimePts:3200},
+    {name:'Marco Torres',     txn:315, sales:13281, ghf:79,  plus:50,  monthlyPts:1793, allTimePts:4400},
+    {name:'Jordan Treece',    txn:263, sales:11419, ghf:69,  plus:43,  monthlyPts:1979, allTimePts:4900},
+    {name:'James Ochsner',    txn:268, sales:9919,  ghf:69,  plus:28,  monthlyPts:1441, allTimePts:3600},
+    {name:'Javier Morales',   txn:229, sales:9458,  ghf:37,  plus:18,  monthlyPts:1223, allTimePts:2800},
+    {name:'Carlos Cordero',   txn:108, sales:3627,  ghf:20,  plus:29,  monthlyPts:613,  allTimePts:1400},
+    {name:'Eric Carter',      txn:72,  sales:3156,  ghf:18,  plus:7,   monthlyPts:441,  allTimePts:900},
+    {name:'Mariano Sandoval', txn:39,  sales:1873,  ghf:11,  plus:2,   monthlyPts:222,  allTimePts:500},
+    {name:'Leia Cail',        txn:1,   sales:0,     ghf:10,  plus:4,   monthlyPts:70,   allTimePts:150},
+  ],
+  baseline: {txn:11200, sales:172000, ghf:1188, plus:842, atv:35.80},
+  trend: [
+    {month:'Jan', ghf:1120, sales:43200, active:false},
+    {month:'Feb', ghf:1145, sales:44100, active:false},
+    {month:'Mar', ghf:1188, sales:47200, active:false},
+    {month:'Apr', ghf:1298, sales:52100, active:true},
+    {month:'May', ghf:1421, sales:57800, active:true},
+    {month:'Jun', ghf:1565, sales:62340, active:true},
+  ]
+};
+
+function loadDemo(){ DATA = DEMO; showDashboard(); }
+
+function handleUpload(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try{
+      const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+      // Try to parse rep sheet
+      const sheet = wb.Sheets[wb.SheetNames[1]] || wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+      // Find header row
+      const hIdx = rows.findIndex(r => r.some(c => String(c||'').toLowerCase().includes('rep') || String(c||'').toLowerCase().includes('name')));
+      if(hIdx < 0){ loadDemo(); return; }
+      const headers = rows[hIdx].map(h=>String(h||'').toLowerCase());
+      const nameCol  = headers.findIndex(h=>h.includes('name')||h.includes('rep'));
+      const txnCol   = headers.findIndex(h=>h.includes('trans'));
+      const salesCol = headers.findIndex(h=>h.includes('sales')&&!h.includes('net')===false||h.includes('net'));
+      const ghfCol   = headers.findIndex(h=>h.includes('ghf'));
+      const plusCol  = headers.findIndex(h=>h.includes('plus'));
+      const ptsCol   = headers.findIndex(h=>h.includes('monthly'));
+      const atCol    = headers.findIndex(h=>h.includes('all'));
+      const reps = rows.slice(hIdx+1)
+        .filter(r=>r[nameCol]&&String(r[nameCol]).trim()&&!String(r[nameCol]).toLowerCase().includes('total'))
+        .map(r=>({
+          name: String(r[nameCol]||''),
+          txn:  parseFloat(r[txnCol])||0,
+          sales:parseFloat(r[salesCol])||0,
+          ghf:  parseFloat(r[ghfCol])||0,
+          plus: parseFloat(r[plusCol])||0,
+          monthlyPts: parseFloat(r[ptsCol])||0,
+          allTimePts: parseFloat(r[atCol])||0,
+        }));
+      DATA = { ...DEMO, reps, shopName: file.name.replace(/\.[^.]+$/,''), period: new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'}) };
+      showDashboard();
+    } catch(e){ loadDemo(); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showDashboard(){
+  document.getElementById('upload-screen').style.display = 'none';
+  document.getElementById('main-nav').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('nav-period').textContent = DATA.period;
+  setView('brand');
+  setTimeout(animateNumbers, 100);
+}
+
+function setView(v){
+  currentView = v;
+  document.getElementById('btn-brand').classList.toggle('active', v==='brand');
+  document.getElementById('btn-retailer').classList.toggle('active', v==='retailer');
+  renderDashboard();
+}
+
+function renderDashboard(){
+  const d = DATA;
+  const reps = d.reps;
+  const totalGHF   = reps.reduce((s,r)=>s+r.ghf,0);
+  const totalPlus  = reps.reduce((s,r)=>s+r.plus,0);
+  const totalSales = reps.reduce((s,r)=>s+r.sales,0);
+  const totalTxn   = reps.reduce((s,r)=>s+r.txn,0);
+  const totalPts   = reps.reduce((s,r)=>s+r.monthlyPts,0);
+  const avgAtv     = totalTxn>0 ? totalSales/totalTxn : 0;
+  const bl         = d.baseline;
+
+  if(currentView==='brand'){
+    document.getElementById('hero-eyebrow').textContent = 'Brand Performance · ' + d.shopName;
+    document.getElementById('hero-title').innerHTML = 'The program is <em>working.</em>';
+    document.getElementById('hero-desc').textContent = 'Here\'s what Perennial delivered for your brand this period.';
+
+    renderKPIs([
+      {label:'GHF Units Sold',     val:totalGHF,   fmt:'#,##0', delta:((totalGHF-bl.ghf)/bl.ghf*100).toFixed(1)+'%', sub:'vs. '+bl.ghf.toLocaleString()+' baseline'},
+      {label:'Plus Units Sold',    val:totalPlus,  fmt:'#,##0', delta:((totalPlus-bl.plus)/bl.plus*100).toFixed(1)+'%', sub:'vs. '+bl.plus.toLocaleString()+' baseline'},
+      {label:'Net Sales',          val:totalSales, fmt:'$K',    delta:((totalSales-bl.sales)/bl.sales*100).toFixed(1)+'%', sub:'vs. '+fmtK(bl.sales)+' baseline'},
+      {label:'Program ROI',        val:null,       fmt:'x',     rawVal: (totalSales-bl.sales)/((totalPts*0.01*0.3)+175), delta:null, sub:'net lift per $1 spent'},
+    ]);
+
+    renderLiftChart([
+      {label:'GHF Units',   before:bl.ghf,   after:totalGHF,   fmt:'#'},
+      {label:'Plus Units',  before:bl.plus,  after:totalPlus,  fmt:'#'},
+      {label:'Net Sales',   before:bl.sales, after:totalSales, fmt:'$K'},
+      {label:'Avg Trans.',  before:bl.atv,   after:avgAtv,     fmt:'$'},
+    ]);
+
+    document.getElementById('rep-col1-header').textContent = 'By Brand Units (GHF + Plus)';
+    renderRepList('rep-list-units', [...reps].sort((a,b)=>(b.ghf+b.plus)-(a.ghf+a.plus)), r=>((r.ghf+r.plus).toLocaleString()+' units'), r=>r.ghf+r.plus, Math.max(...reps.map(r=>r.ghf+r.plus)));
+    renderRepList('rep-list-sales', [...reps].sort((a,b)=>b.sales-a.sales), r=>fmtK(r.sales), r=>r.sales, Math.max(...reps.map(r=>r.sales)));
+
+  } else {
+    document.getElementById('hero-eyebrow').textContent = 'Retailer Performance · ' + d.shopName;
+    document.getElementById('hero-title').innerHTML = 'Your team is <em>performing.</em>';
+    document.getElementById('hero-desc').textContent = 'Here\'s how your staff performed with Perennial this period.';
+
+    renderKPIs([
+      {label:'Total Transactions', val:totalTxn,   fmt:'#,##0', delta:((totalTxn-bl.txn)/bl.txn*100).toFixed(1)+'%', sub:'vs. '+bl.txn.toLocaleString()+' baseline'},
+      {label:'Net Sales',          val:totalSales, fmt:'$K',    delta:((totalSales-bl.sales)/bl.sales*100).toFixed(1)+'%', sub:'vs. '+fmtK(bl.sales)+' baseline'},
+      {label:'Avg Transaction',    val:avgAtv,     fmt:'$',     delta:((avgAtv-bl.atv)/bl.atv*100).toFixed(1)+'%', sub:'vs. $'+bl.atv.toFixed(2)+' baseline'},
+      {label:'Staff Engaged',      val:reps.length,fmt:'#',     delta:null, sub:reps.filter(r=>r.monthlyPts>500).length+' at Tier 1+'},
+    ]);
+
+    renderLiftChart([
+      {label:'Transactions', before:bl.txn,   after:totalTxn,   fmt:'#'},
+      {label:'Net Sales',    before:bl.sales, after:totalSales, fmt:'$K'},
+      {label:'Avg Trans.',   before:bl.atv,   after:avgAtv,     fmt:'$'},
+      {label:'GHF + Plus',   before:bl.ghf+bl.plus, after:totalGHF+totalPlus, fmt:'#'},
+    ]);
+
+    document.getElementById('rep-col1-header').textContent = 'By Transactions';
+    renderRepList('rep-list-units', [...reps].sort((a,b)=>b.txn-a.txn), r=>r.txn.toLocaleString()+' txns', r=>r.txn, Math.max(...reps.map(r=>r.txn)));
+    renderRepList('rep-list-sales', [...reps].sort((a,b)=>b.sales-a.sales), r=>fmtK(r.sales), r=>r.sales, Math.max(...reps.map(r=>r.sales)));
+  }
+
+  renderTrend();
+  renderTiers(reps);
+
+  document.getElementById('footer-note').textContent = 'Data period: '+d.period+' · '+d.shopName+' · Confidential — Perennial Rewards';
+}
+
+function renderKPIs(items){
+  document.getElementById('kpi-grid').innerHTML = items.map(item=>{
+    const fmtVal = v => {
+      if(item.fmt==='$K') return fmtK(v);
+      if(item.fmt==='$')  return '$'+v.toFixed(2);
+      if(item.fmt==='x')  return (item.rawVal||0).toFixed(1)+'×';
+      return Math.round(v).toLocaleString();
+    };
+    const numVal = item.rawVal !== undefined ? item.rawVal : item.val;
+    return `<div class="kpi-card">
+      <div class="kpi-eyebrow">${item.label}</div>
+      <div class="kpi-num" data-target="${numVal}" data-fmt="${item.fmt}">${fmtVal(numVal)}</div>
+      ${item.delta ? `<div class="kpi-delta up">↑ ${item.delta} vs baseline</div>` : '<div class="kpi-delta neutral">—</div>'}
+      <div class="kpi-sub">${item.sub}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderLiftChart(rows){
+  const maxVal = Math.max(...rows.map(r=>r.after));
+  document.getElementById('lift-chart').innerHTML = rows.map(row=>{
+    const bw = Math.round(row.before/maxVal*100);
+    const aw = Math.round(row.after/maxVal*100);
+    const lift = ((row.after-row.before)/row.before*100).toFixed(1);
+    const fmtV = v => row.fmt==='$K'?fmtK(v):row.fmt==='$'?'$'+v.toFixed(2):Math.round(v).toLocaleString();
+    return `<div class="bar-row">
+      <div class="bar-label">${row.label}</div>
+      <div class="bar-track">
+        <div class="bar-fill-after green" style="width:${aw}%"></div>
+        <div style="position:absolute;left:0;top:0;height:100%;width:${bw}%;background:rgba(255,255,255,0.07);border-radius:6px;border:1px solid rgba(255,255,255,0.1)"></div>
+      </div>
+      <div class="bar-val">${fmtV(row.after)} <div class="bar-lift">+${lift}%</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderRepList(id, reps, valFn, numFn, maxVal){
+  const top8 = reps.slice(0,8);
+  document.getElementById(id).innerHTML = top8.map((rep,i)=>{
+    const color = COLORS[i%COLORS.length];
+    const pct = Math.round(numFn(rep)/maxVal*100);
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    return `<div class="rep-item${i===0?' first':''}">
+      <div class="rep-rank-num">${medal||i+1}</div>
+      <div class="rep-avatar-sm" style="background:${color}22;color:${color}">${ini(rep.name)}</div>
+      <div class="rep-name-sm">${rep.name.split(' ')[0]} ${rep.name.split(' ')[1]?.[0]||''}.</div>
+      <div class="rep-bar-wrap">
+        <div class="rep-bar-bg"><div class="rep-bar-fg${i===0?' gold':''}" style="width:${pct}%"></div></div>
+        <div class="rep-val-sm">${valFn(rep)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTrend(){
+  const trend = DATA.trend;
+  const maxGHF = Math.max(...trend.map(t=>t.ghf));
+  const html = trend.map((t,i)=>{
+    const h = Math.round(t.ghf/maxGHF*110);
+    const bh = Math.round(DATA.baseline.ghf/maxGHF*110);
+    const isCurrent = i===trend.length-1;
+    return `<div class="trend-bar-group">
+      <div class="trend-bar-pair">
+        <div class="trend-bar before" style="height:${bh}px"></div>
+        <div class="trend-bar after${isCurrent?' current':''}" style="height:${h}px"></div>
+      </div>
+      <div class="trend-label${t.active?' trend-launched':''}">${t.month}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('trend-chart').innerHTML = html;
+  if(DATA.trend.some(t=>t.active)){
+    const launchIdx = DATA.trend.findIndex(t=>t.active);
+    const bars = document.querySelectorAll('.trend-label');
+    if(bars[launchIdx]) bars[launchIdx].textContent += ' 🚀';
+  }
+}
+
+function renderTiers(reps){
+  const topAllTime = Math.max(...reps.map(r=>r.allTimePts));
+  document.getElementById('tiers-grid').innerHTML = TIERS.map(tier=>{
+    const count = reps.filter(r=>r.allTimePts>=tier.pts).length;
+    const pct = Math.min(Math.round(topAllTime/tier.pts*100),100);
+    const unlocked = count > 0;
+    return `<div class="tier-card${unlocked?' unlocked':''}">
+      <div class="tier-emoji">${tier.emoji}</div>
+      <div class="tier-reward-name">${tier.reward}</div>
+      <div class="tier-pts-label">${tier.pts.toLocaleString()} points</div>
+      <div class="tier-prog-bg"><div class="tier-prog-fill" style="width:${pct}%"></div></div>
+      <div class="tier-prog-text">Top rep at ${pct}% of this tier</div>
+      <div class="tier-count">${count} of ${reps.length} reps unlocked</div>
+    </div>`;
+  }).join('');
+}
+
+function animateNumbers(){
+  document.querySelectorAll('.kpi-num[data-target]').forEach(el=>{
+    const target = parseFloat(el.dataset.target)||0;
+    const fmt = el.dataset.fmt;
+    let start = 0;
+    const dur = 1200;
+    const step = 16;
+    const inc = target/(dur/step);
+    const timer = setInterval(()=>{
+      start = Math.min(start+inc, target);
+      if(fmt==='$K') el.textContent = fmtK(start);
+      else if(fmt==='$') el.textContent = '$'+start.toFixed(2);
+      else if(fmt==='x') el.textContent = start.toFixed(1)+'×';
+      else el.textContent = Math.round(start).toLocaleString();
+      if(start>=target) clearInterval(timer);
+    }, step);
+  });
+}
+</script>
+</body>
+</html>

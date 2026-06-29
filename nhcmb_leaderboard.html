@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shop Leaderboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+  import { getDatabase, ref, set, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+  // ================================================================
+  // FIREBASE CONFIG — fill in from console.firebase.google.com
+  // → Your project → Project Settings → Your Apps → Config
+  // ================================================================
+  const firebaseConfig = {
+    apiKey:            'AIzaSyAHjhjW5TPfQl6CNVhm3BoDnmKQlqKKpx4',
+    authDomain:        'nhcrewardsmb.firebaseapp.com',
+    databaseURL:       'https://nhcrewardsmb-default-rtdb.firebaseio.com',
+    projectId:         'nhcrewardsmb',
+    storageBucket:     'nhcrewardsmb.firebasestorage.app',
+    messagingSenderId: '438617783513',
+    appId:             '1:438617783513:web:94b9ea6bd54ce9538f52c8',
+  };
+  // ================================================================
+  // STOP — do not edit anything below this line
+  // ================================================================
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  window.loadFromFirebase = async function() {
+    try {
+      const snap = await get(ref(db, 'leaderboard'));
+      if (snap.exists()) {
+        const data = snap.val();
+        window.renderAll(data.liveData);
+        document.getElementById('header-meta').textContent = 'Updated ' + data.updatedAt;
+        document.getElementById('footer').textContent = window.SHOP_NAME + ' · Updated ' + data.updatedAt;
+      } else {
+        document.getElementById('header-meta').textContent = 'No data yet — manager needs to upload';
+        document.getElementById('board-txn').innerHTML = '<div class="loading-bar">Waiting for manager to upload data.</div>';
+      }
+    } catch(err) {
+      document.getElementById('header-meta').textContent = 'Could not load — check connection';
+      document.getElementById('board-txn').innerHTML = '<div class="loading-bar">Error loading data. Refresh to try again.</div>';
+      console.error('Firebase load error:', err);
+    }
+  };
+
+  window.saveToFirebase = async function(liveData, updatedAt) {
+    try {
+      await set(ref(db, 'leaderboard'), { liveData, updatedAt });
+      return true;
+    } catch(err) {
+      console.error('Firebase save error:', err);
+      return false;
+    }
+  };
+</script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --teal:       #1A3320;
+    --teal-mid:   #254D30;
+    --teal-light: #E8F0E8;
+    --sage:       #C9A84C;
+    --sage-light: #F5EDD8;
+    --cream:      #F5F0E8;
+    --cream-dark: #EAE3D6;
+    --charcoal:   #1a1a18;
+    --gray:       #6B7A72;
+    --border:     #D4CCBC;
+    --white:      #FFFFFF;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--cream);min-height:100vh;color:var(--charcoal)}
+
+  /* ── Banner ─────────────────────────────────────────── */
+  .banner{
+    width:100%;
+    background:var(--teal);
+    background-image:
+      linear-gradient(rgba(26,51,32,0.90), rgba(26,51,32,0.94)),
+      url('https://nhcdispensaries.com/wp-content/uploads/2023/02/IMG_4144-1024x768.jpg');
+    background-size:cover;
+    background-position:center 40%;
+    padding:2rem 1.5rem 2.5rem;
+    text-align:center;
+    position:relative;
+  }
+  .banner::after{
+    content:'';
+    position:absolute;
+    bottom:0;left:0;right:0;
+    height:32px;
+    background:var(--cream);
+    clip-path:ellipse(55% 100% at 50% 100%);
+  }
+  .banner-logo{
+    display:flex;align-items:center;justify-content:center;
+    margin-bottom:1rem;
+  }
+  .logo-icon{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--white);
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;flex-shrink:0;
+  }
+  .logo-icon img{width:36px;height:36px;object-fit:contain}
+  .logo-wordmark{
+    font-family:'DM Serif Display',Georgia,serif;
+    font-size:26px;color:var(--white);
+    letter-spacing:.5px;
+  }
+  .banner-title{
+    font-family:'DM Serif Display',Georgia,serif;
+    font-size:clamp(20px,5vw,30px);
+    color:var(--white);
+    margin-bottom:4px;
+    letter-spacing:.3px;
+  }
+  .banner-meta{
+    font-size:13px;color:rgba(255,255,255,0.65);
+    letter-spacing:.3px;
+  }
+  .mgr-trigger{
+    position:absolute;top:12px;right:16px;
+    font-size:11px;color:rgba(255,255,255,0.25);
+    cursor:pointer;padding:4px 8px;border-radius:6px;
+    user-select:none;transition:color .2s;
+  }
+  .mgr-trigger:hover{color:rgba(255,255,255,0.6)}
+
+  /* ── Page wrap ──────────────────────────────────────── */
+  .page{max-width:740px;margin:0 auto;padding:1.5rem 1rem 2rem}
+
+  /* ── Manager panel ──────────────────────────────────── */
+  .mgr-panel{background:var(--white);border:0.5px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:1.25rem;display:none}
+  .mgr-panel.open{display:block}
+  .mgr-header{background:#1A3320;padding:.875rem 1.25rem;display:flex;align-items:center;justify-content:space-between}
+  .mgr-header-title{font-size:13px;font-weight:600;color:var(--white)}
+  .mgr-close{font-size:20px;color:rgba(255,255,255,0.5);cursor:pointer;padding:0 4px;line-height:1}
+  .mgr-close:hover{color:var(--white)}
+  .mgr-body{padding:1.25rem}
+  .pw-wrap{display:flex;gap:8px;margin-bottom:.75rem}
+  .pw-input{flex:1;padding:9px 14px;font-size:14px;border:0.5px solid var(--border);border-radius:8px;font-family:monospace;letter-spacing:3px;outline:none;background:var(--cream);transition:border-color .15s}
+  .pw-input:focus{border-color:#1A3320;background:var(--white)}
+  .pw-input.error{border-color:#EF4444;animation:shake .3s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .pw-btn{padding:9px 18px;font-size:13px;font-weight:500;border-radius:8px;background:#1A3320;color:var(--white);border:none;cursor:pointer}
+  .pw-btn:hover{background:#254D30}
+  .pw-error{font-size:12px;color:#EF4444;margin-bottom:6px;min-height:16px}
+  .upload-area{border:2px dashed var(--border);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .15s;position:relative;display:none}
+  .upload-area.visible{display:block}
+  .upload-area:hover,.upload-area.drag{border-color:#1A3320;background:#E8F0E8}
+  .upload-area.done{border-color:#C9A84C;border-style:solid;background:#F5EDD8}
+  .upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+  .upload-icon{font-size:24px;margin-bottom:6px}
+  .upload-label{font-size:13px;font-weight:500;color:var(--charcoal);margin-bottom:2px}
+  .upload-sub{font-size:12px;color:var(--gray)}
+  .upload-result{font-size:13px;font-weight:500;color:#C9A84C;margin-top:6px;display:none}
+  .sync-status{font-size:12px;color:var(--gray);margin-top:4px;display:none}
+
+  /* ── Tabs ───────────────────────────────────────────── */
+  .tabs{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin-bottom:1.25rem}
+  .tab{padding:9px 4px;font-size:12px;font-weight:500;border-radius:10px;border:0.5px solid var(--border);background:var(--white);cursor:pointer;color:var(--gray);transition:all .15s;text-align:center;line-height:1.3}
+  .tab .ti{font-size:15px;display:block;margin-bottom:2px}
+  .tab.active.txn{background:#1A3320;color:var(--white);border-color:#1A3320}
+  .tab.active.sales{background:#C9A84C;color:var(--white);border-color:#C9A84C}
+  .tab.active.avg{background:#8B6914;color:var(--white);border-color:#8B6914}
+  .tab.active.ghf{background:#254D30;color:var(--white);border-color:#254D30}
+  .tab.active.plus{background:#7B6FAB;color:var(--white);border-color:#7B6FAB}
+
+  /* ── Metrics ────────────────────────────────────────── */
+  .metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.25rem}
+  .metric{background:var(--white);border-radius:12px;border:0.5px solid var(--border);padding:.875rem;text-align:center}
+  .metric-label{font-size:11px;color:var(--gray);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+  .metric-val{font-size:20px;font-weight:600;color:var(--charcoal)}
+
+  /* ── Podium ─────────────────────────────────────────── */
+  .podium{display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:10px;margin-bottom:1.25rem;align-items:end}
+  .podium-card{background:var(--white);border-radius:12px;border:0.5px solid var(--border);padding:1rem .875rem;text-align:center}
+  .podium-card.p1.txn{border:1.5px solid #1A3320;background:linear-gradient(to bottom,#E8F0E8,var(--white))}
+  .podium-card.p1.sales{border:1.5px solid #C9A84C;background:linear-gradient(to bottom,#F5EDD8,var(--white))}
+  .podium-card.p1.avg{border:1.5px solid #6B4FA0;background:linear-gradient(to bottom,#EDE9FE,var(--white))}
+  .podium-card.p1.ghf{border:1.5px solid #254D30;background:linear-gradient(to bottom,#E8F0E8,var(--white))}
+  .podium-card.p1.plus{border:1.5px solid #7B6FAB;background:linear-gradient(to bottom,#EDE9FE,var(--white))}
+  .podium-emoji{font-size:24px;margin-bottom:4px}
+  .podium-name{font-size:12px;font-weight:600;color:var(--charcoal);margin-bottom:2px;line-height:1.2}
+  .podium-val{font-size:18px;font-weight:700;color:var(--charcoal)}
+  .podium-sub{font-size:11px;color:var(--gray)}
+
+  /* ── Table ──────────────────────────────────────────── */
+  .card{background:var(--white);border-radius:14px;border:0.5px solid var(--border);overflow:hidden}
+  .thead{display:grid;padding:9px 16px;font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border);grid-template-columns:44px 1fr 120px}
+  .thead.txn{background:#E8F0E8}
+  .thead.sales{background:#F5EDD8}
+  .thead.avg{background:#F5EDD8}
+  .thead.ghf{background:#E8F0E8}
+  .thead.plus{background:#EDE9F5}
+  .rep-row{display:grid;padding:12px 16px;align-items:center;border-bottom:0.5px solid var(--cream-dark);transition:background .1s;grid-template-columns:44px 1fr 120px}
+  .rep-row:last-child{border-bottom:none}
+  .rep-row:hover{background:var(--cream)}
+  .rep-row.hl{background:linear-gradient(90deg,#E8F0E8,transparent)}
+  .rank{font-size:14px;font-weight:600;text-align:center}
+  .rep-info{display:flex;align-items:center;gap:9px}
+  .avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+  .rep-name{font-size:13px;font-weight:500;color:var(--charcoal)}
+  .val{font-size:13px;font-weight:600;color:var(--charcoal);text-align:right}
+  .loading-bar{text-align:center;padding:2.5rem 1rem;color:var(--gray);font-size:13px}
+
+  /* ── Footer ─────────────────────────────────────────── */
+  .footer{text-align:center;font-size:11px;color:var(--gray);margin-top:1.5rem;padding-bottom:.5rem;letter-spacing:.3px}
+
+  /* ── Reward banner ───────────────────────────────────── */
+  .reward-banner{background:var(--white);border:0.5px solid var(--border);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden}
+  .reward-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(91,63,138,0.04),transparent);pointer-events:none}
+  .reward-icon-wrap{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,#2D1B69,#5B3F8A);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+  .reward-text{flex:1}
+  .reward-eyebrow{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#5B3F8A;margin-bottom:3px}
+  .reward-headline{font-size:15px;font-weight:600;color:var(--charcoal);margin-bottom:6px}
+  .reward-tiers{display:flex;gap:6px;flex-wrap:wrap}
+  .reward-tier{font-size:11px;font-weight:500;padding:3px 9px;border-radius:20px;background:#F3F0FA;color:#5B3F8A;white-space:nowrap}
+  .reward-tier.top{background:linear-gradient(135deg,#2D1B69,#5B3F8A);color:#fff}
+
+
+  /* ── Points tab ─────────────────────────────────────── */
+  .tab.active.points{background:linear-gradient(135deg,#2D1B69,#5B3F8A);color:var(--white);border-color:#5B3F8A}
+  .points-hero{background:linear-gradient(135deg,#2D1B69 0%,#5B3F8A 100%);border-radius:16px;padding:1.5rem;text-align:center;margin-bottom:1.25rem;color:var(--white)}
+  .points-hero-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.7;margin-bottom:6px}
+  .points-total{font-size:48px;font-weight:600;line-height:1;margin-bottom:2px}
+  .points-sub{font-size:12px;opacity:.65;margin-bottom:1.25rem}
+  .points-split{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .points-pill{background:rgba(255,255,255,0.12);border-radius:10px;padding:.75rem;text-align:center}
+  .points-pill-val{font-size:20px;font-weight:600}
+  .points-pill-label{font-size:11px;opacity:.7;margin-top:2px}
+  .earn-card{background:var(--white);border-radius:14px;border:0.5px solid var(--border);overflow:hidden;margin-bottom:1.25rem}
+  .earn-header{background:#F3F0FA;padding:10px 16px;font-size:11px;font-weight:600;color:#5B3F8A;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border)}
+  .earn-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--cream-dark)}
+  .earn-row:last-child{border-bottom:none}
+  .earn-icon{font-size:18px;margin-right:10px}
+  .earn-desc{font-size:13px;color:var(--charcoal)}
+  .earn-pts{font-size:13px;font-weight:600;color:#5B3F8A;white-space:nowrap}
+  .redeem-card{background:var(--white);border-radius:14px;border:0.5px solid var(--border);overflow:hidden;margin-bottom:1.25rem}
+  .redeem-header{background:#F3F0FA;padding:10px 16px;font-size:11px;font-weight:600;color:#5B3F8A;text-transform:uppercase;letter-spacing:.5px;border-bottom:0.5px solid var(--border)}
+  .tier-row{display:flex;align-items:center;padding:14px 16px;border-bottom:0.5px solid var(--cream-dark);gap:14px}
+  .tier-row:last-child{border-bottom:none}
+  .tier-row.unlocked{background:linear-gradient(90deg,rgba(91,63,138,0.05),transparent)}
+  .tier-badge{width:44px;height:44px;border-radius:10px;background:#F3F0FA;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+  .tier-row.unlocked .tier-badge{background:linear-gradient(135deg,#2D1B69,#5B3F8A)}
+  .tier-info{flex:1}
+  .tier-reward{font-size:14px;font-weight:600;color:var(--charcoal)}
+  .tier-pts-needed{font-size:12px;color:var(--gray);margin-top:2px}
+  .tier-progress{margin-top:6px}
+  .tier-bar-bg{height:4px;background:var(--cream-dark);border-radius:4px;overflow:hidden}
+  .tier-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#2D1B69,#5B3F8A);transition:width .6s ease}
+  .tier-pct{font-size:10px;color:var(--gray);margin-top:3px}
+  .tier-unlocked-badge{font-size:11px;font-weight:600;color:#5B3F8A;background:#F3F0FA;padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .points-leaderboard{background:var(--white);border-radius:14px;border:0.5px solid var(--border);overflow:hidden;margin-bottom:1.25rem}
+  .pts-head{display:grid;grid-template-columns:44px 1fr 90px 90px;padding:9px 16px;font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.4px;border-bottom:0.5px solid var(--border);background:#F3F0FA}
+  .pts-row{display:grid;grid-template-columns:44px 1fr 90px 90px;padding:11px 16px;align-items:center;border-bottom:0.5px solid var(--cream-dark)}
+  .pts-row:last-child{border-bottom:none}
+  .pts-row:hover{background:var(--cream)}
+  .pts-row.hl{background:linear-gradient(90deg,rgba(91,63,138,0.06),transparent)}
+  .pts-val{font-size:13px;font-weight:600;color:#5B3F8A;text-align:right}
+  .pts-monthly{font-size:13px;color:var(--gray);text-align:right}
+  .perennial-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#5B3F8A;margin-bottom:1rem}
+  .perennial-badge::before,.perennial-badge::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#5B3F8A44)}
+
+  /* ── Export buttons ─────────────────────────────────── */
+  .export-section{margin-top:1rem;border-top:0.5px solid var(--border);padding-top:1rem;display:none}
+  .export-section.visible{display:block}
+  .export-label{font-size:11px;font-weight:600;color:var(--gray);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem}
+  .export-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .export-btn{display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;border:none;font-family:inherit;transition:opacity .15s}
+  .export-btn:hover{opacity:.85}
+  .export-btn.brand{background:#1E2433;color:#fff}
+  .export-btn.retailer{background:var(--teal);color:#fff}
+  .export-btn.csv{background:var(--cream);color:var(--charcoal);border:0.5px solid var(--border)}
+  .export-status{font-size:12px;color:var(--gray);margin-top:8px;text-align:center;min-height:16px}
+
+
+
+  /* ── 1st place prize ─────────────────────────────────── */
+  .first-place-banner{background:linear-gradient(135deg,#B8860B,#DAA520,#B8860B);border-radius:14px;padding:1rem 1.25rem;margin-bottom:1.25rem;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(184,134,11,0.25)}
+  .first-place-banner::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.12),transparent 60%);pointer-events:none}
+  .first-place-crown{font-size:32px;flex-shrink:0;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2))}
+  .first-place-text{flex:1}
+  .first-place-eyebrow{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.8);margin-bottom:3px}
+  .first-place-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;text-shadow:0 1px 2px rgba(0,0,0,0.15)}
+  .first-place-prize{font-size:13px;color:rgba(255,255,255,0.85);font-weight:500}
+  .first-place-winner{display:flex;align-items:center;gap:8px;margin-top:8px;background:rgba(0,0,0,0.15);border-radius:8px;padding:6px 10px}
+  .first-place-winner-label{font-size:11px;color:rgba(255,255,255,0.7);font-weight:500}
+  .first-place-winner-name{font-size:13px;font-weight:700;color:#fff}
+  .first-place-winner-val{font-size:12px;color:rgba(255,255,255,0.8);margin-left:auto}
+  .prize-placeholder{font-size:12px;color:rgba(255,255,255,0.7);font-style:italic}
+  @media(max-width:520px){
+    .tab{font-size:10px;padding:7px 2px}.tab .ti{font-size:13px}
+    .thead,.rep-row{grid-template-columns:34px 1fr 80px}
+    .podium-val{font-size:15px}
+    .banner-title{font-size:18px}
+  }
+
+  /* ── Hamburger nav drawer ────────────────────────────── */
+  .ham-btn{position:absolute;top:14px;left:14px;width:40px;height:40px;border-radius:10px;background:rgba(255,255,255,0.12);border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;z-index:200;transition:background .15s}
+  .ham-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-line{width:18px;height:2px;background:#fff;border-radius:2px;transition:all .25s}
+  .ham-btn.open .ham-line:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .ham-btn.open .ham-line:nth-child(2){opacity:0;transform:scaleX(0)}
+  .ham-btn.open .ham-line:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .ham-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:300;opacity:0;pointer-events:none;transition:opacity .25s}
+  .ham-overlay.visible{opacity:1;pointer-events:all}
+  .ham-drawer{position:fixed;top:0;left:0;width:280px;height:100%;background:#fff;z-index:400;transform:translateX(-100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:4px 0 24px rgba(0,0,0,0.12)}
+  .ham-drawer.open{transform:translateX(0)}
+  .ham-drawer-header{background:var(--nav-primary,#1A3320);padding:1.25rem 1.25rem 1rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+  .ham-drawer-logo{font-family:'DM Serif Display',serif;font-size:18px;font-weight:600;color:#fff;display:flex;align-items:center;gap:6px}
+  .ham-drawer-logo-dot{width:6px;height:6px;border-radius:50%;background:var(--nav-accent,#C9A84C);flex-shrink:0}
+  .ham-drawer-shop{font-size:11px;color:rgba(255,255,255,0.45);margin-top:2px}
+  .ham-close-btn{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,0.1);border:none;cursor:pointer;color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center}
+  .ham-close-btn:hover{background:rgba(255,255,255,0.2)}
+  .ham-nav{flex:1;overflow-y:auto;padding:.75rem 0}
+  .ham-section-label{font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#9CA3AF;padding:.5rem 1.25rem .375rem;margin-top:.5rem}
+  .ham-nav-item{display:flex;align-items:center;gap:12px;padding:.875rem 1.25rem;text-decoration:none;color:#1A1A18;transition:background .12s;cursor:pointer;border:none;background:none;width:100%;font-family:inherit;text-align:left}
+  .ham-nav-item:hover{background:#F5F0E8}
+  .ham-nav-item.active{background:#F0EAD8;color:#1A3320}
+  .ham-nav-item.active .ham-nav-icon{background:#1A3320}
+  .ham-nav-icon{width:34px;height:34px;border-radius:9px;background:#1A3320;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+  .ham-nav-text{flex:1}
+  .ham-nav-label{font-size:14px;font-weight:500;color:inherit}
+  .ham-nav-sub{font-size:11px;color:#9CA3AF;margin-top:1px}
+  .ham-nav-badge{font-size:10px;font-weight:600;color:#1A3320;background:#F0EAD8;padding:2px 8px;border-radius:10px;white-space:nowrap}
+  .ham-nav-item.mgr-item .ham-nav-label{color:#1A3320}
+  .ham-divider{height:1px;background:#EDE4D0;margin:.5rem 0}
+  .ham-footer{padding:1rem 1.25rem;border-top:1px solid #EDE4D0;flex-shrink:0}
+  .ham-footer-brand{font-size:11px;color:#9CA3AF}
+  .ham-footer-brand span{color:#C9A84C;font-weight:600}
+</style>
+</head>
+<body>
+<!-- Hamburger overlay + drawer -->
+<div class="ham-overlay" id="ham-overlay" onclick="closeDrawer()"></div>
+<div class="ham-drawer" id="ham-drawer">
+  <div class="ham-drawer-header">
+    <div>
+      <div class="ham-drawer-logo">Rewards Program</div>
+      <div class="ham-drawer-shop" id="ham-shop-name"></div>
+    </div>
+    <button class="ham-close-btn" onclick="closeDrawer()">X</button>
+  </div>
+  <nav class="ham-nav">
+    <div class="ham-section-label">Main</div>
+    <a class="ham-nav-item" id="ham-hub" href="index.html">
+      <div class="ham-nav-icon">&#127968;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Hub</div><div class="ham-nav-sub">Live overview &amp; stats</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-leaderboard" href="leaderboard.html">
+      <div class="ham-nav-icon">&#127942;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Leaderboard</div><div class="ham-nav-sub">Live team rankings</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-redeem" href="redeem.html">
+      <div class="ham-nav-icon">&#127873;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Redeem Points</div><div class="ham-nav-sub">Submit a reward request</div></div>
+    </a>
+    <a class="ham-nav-item" id="ham-myrep" href="myrep.html">
+      <div class="ham-nav-icon">&#11088;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">My Rewards</div><div class="ham-nav-sub">Your personal stats &amp; progress</div></div>
+    </a>
+    <div class="ham-divider"></div>
+    <div class="ham-section-label">Manager</div>
+    <a class="ham-nav-item mgr-item" id="ham-roster" href="roster.html">
+      <div class="ham-nav-icon">&#128101;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Roster</div><div class="ham-nav-sub">Manage reps &amp; notifications</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+    <a class="ham-nav-item mgr-item" id="ham-dashboard" href="dashboard.html">
+      <div class="ham-nav-icon">&#128202;</div>
+      <div class="ham-nav-text"><div class="ham-nav-label">Dashboard</div><div class="ham-nav-sub">Performance reports</div></div>
+      <div class="ham-nav-badge">Lock</div>
+    </a>
+  </nav>
+  <div class="ham-footer">
+    <div class="ham-footer-brand">Shop <span>Rewards Program</span></div>
+  </div>
+</div>
+
+
+<!-- Banner -->
+<div class="banner" style="position:relative">
+  <button class="ham-btn" id="ham-btn" onclick="openDrawer()" aria-label="Open menu"><div class="ham-line"></div><div class="ham-line"></div><div class="ham-line"></div></button>
+  <div class="mgr-trigger" onclick="triggerTap()">⚙</div>
+  <div class="banner-logo">
+    <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1NzYgMzgxLjUyIj48ZyBpZD0iTGF5ZXJfMiIgZGF0YS1uYW1lPSJMYXllciAyIj48ZyBpZD0iTGF5ZXJfMS0yIiBkYXRhLW5hbWU9IkxheWVyIDEiPjxwYXRoIGQ9Ik0zLjksMzYxLjA1djIwSDBWMzU1SDRsMTQuMTUsMTkuNVYzNTVoMy45djI2SDE4LjI5WiIvPjxwYXRoIGQ9Ik00OC4yLDM3NS42M0gzNS40NUwzMy4zNSwzODFoLTQuM2wxMC4zNC0yNmg0Ljg3TDU0LjYsMzgxSDUwLjMxWm0tMTEuNjItMy40N0g0Ny4wN2wtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNNjUuNCwzNTguNDNINTcuMzNWMzU1aDIwdjMuNDNoLThWMzgxSDY1LjRaIi8+PHBhdGggZD0iTTg1LjI5LDM1NWgzLjk0djE1LjcyYzAsNC40NCwyLjQ2LDcuMjksNyw3LjI5czctMi44NSw3LTcuMjlWMzU1aDMuOTR2MTUuOGMwLDYuNDctMy42MiwxMC42OC0xMC45MiwxMC42OHMtMTEtNC4yNS0xMS0xMC42NFoiLz48cGF0aCBkPSJNMTI1LjY2LDM3MWgtNC44N3YxMGgtMy45VjM1NWgxMWM1LDAsOC4zNSwzLjIsOC4zNSw4YTcuMjUsNy4yNSwwLDAsMS02LjQ3LDcuNkwxMzYuMzgsMzgxaC00LjUyWm0xLjY4LTEyLjU2aC02LjU1djkuMTNoNi41NWE0LjU3LDQuNTcsMCwxLDAsMC05LjEzWiIvPjxwYXRoIGQ9Ik0xNjEuMzUsMzc1LjYzSDE0OC41OWwtMi4xLDUuMzhIMTQyLjJsMTAuMzMtMjZoNC44OGwxMC4zMywyNmgtNC4yOVptLTExLjYzLTMuNDdoMTAuNDlMMTU1LDM1OC4zOVoiLz48cGF0aCBkPSJNMTc0Ljc2LDM1NWgzLjl2MjIuNThoMTEuODJWMzgxSDE3NC43NloiLz48cGF0aCBkPSJNMjMwLjkyLDM2OS4zOUgyMTYuNTNWMzgxaC0zLjlWMzU1aDMuOXYxMC45MmgxNC4zOVYzNTVoMy45djI2aC0zLjlaIi8+PHBhdGggZD0iTTI0NC41LDM1NUgyNjJ2My40M0gyNDguNFYzNjZoMTMuMjl2My40M0gyNDguNHY4LjExSDI2MlYzODFIMjQ0LjVaIi8+PHBhdGggZD0iTTI4Ny4yLDM3NS42M0gyNzQuNDVMMjcyLjM0LDM4MWgtNC4yOWwxMC4zNC0yNmg0Ljg3bDEwLjM0LDI2aC00LjI5Wm0tMTEuNjItMy40N2gxMC40OWwtNS4yNi0xMy43N1oiLz48cGF0aCBkPSJNMzAwLjYyLDM1NWgzLjl2MjIuNThoMTEuODFWMzgxSDMwMC42MloiLz48cGF0aCBkPSJNMzI0LjUzLDM1NWgzLjl2MjZoLTMuOVoiLz48cGF0aCBkPSJNMzQyLDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE2LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNMzgyLjI4LDM1NC41N2ExMi4yMSwxMi4yMSwwLDAsMSwxMC4zLDUuMTVsLTMuMTYsMS44M2E5LDksMCwwLDAtNy4xNC0zLjUxYy01LjQyLDAtOS40Nyw0LjE0LTkuNDcsMTBzNC4wNSwxMCw5LjQ3LDEwYTEwLjExLDEwLjExLDAsMCwwLDYuNi0yLjU3VjM3MC44aC04LjM1di0zLjQ0aDEyLjI1djkuNTZhMTMuODYsMTMuODYsMCwwLDEtMTAuNSw0LjZBMTMuMDksMTMuMDksMCwwLDEsMzY4Ljc5LDM2OEMzNjguNzksMzU5LjkxLDM3NC44NCwzNTQuNTcsMzgyLjI4LDM1NC41N1oiLz48cGF0aCBkPSJNNDE0LjU0LDM2OGExMywxMywwLDAsMSwxMy4zNC0xMy40NiwxMS43NywxMS43NywwLDAsMSwxMC4zMyw1LjVsLTMuMzEsMS43NmE4LjI0LDguMjQsMCwwLDAtNy0zLjc5Yy01LjI3LDAtOS4zMiw0LjE0LTkuMzIsMTBzNC4wNSwxMCw5LjMyLDEwYTguMjYsOC4yNiwwLDAsMCw3LTMuNzhsMy4zMSwxLjc1YTExLjgsMTEuOCwwLDAsMS0xMC4zMyw1LjVBMTMsMTMsMCwwLDEsNDE0LjU0LDM2OFoiLz48cGF0aCBkPSJNNDQ2LDM1NWgxNy40N3YzLjQzSDQ0OS45MVYzNjZoMTMuM3YzLjQzaC0xMy4zdjguMTFoMTMuNTdWMzgxSDQ0NloiLz48cGF0aCBkPSJNNDc2LjE2LDM2MS4wNXYyMGgtMy45VjM1NWg0bDE0LjE1LDE5LjVWMzU1aDMuOXYyNmgtMy43OFoiLz48cGF0aCBkPSJNNTEwLjM2LDM1OC40M2gtOC4wN1YzNTVoMjB2My40M2gtOFYzODFoLTMuOVoiLz48cGF0aCBkPSJNNTMwLjI1LDM1NWgxNy40OHYzLjQzSDUzNC4xNlYzNjZoMTMuMjl2My40M0g1MzQuMTZ2OC4xMWgxMy41N1YzODFINTMwLjI1WiIvPjxwYXRoIGQ9Ik01NjUuMjgsMzcxSDU2MC40djEwaC0zLjlWMzU1aDExYzQuOTUsMCw4LjM1LDMuMiw4LjM1LDhhNy4yNSw3LjI1LDAsMCwxLTYuNDgsNy42TDU3NiwzODFoLTQuNTJaTTU2NywzNTguNDNINTYwLjR2OS4xM0g1NjdhNC41Nyw0LjU3LDAsMSwwLDAtOS4xM1oiLz48cGF0aCBkPSJNNTcwLDI1MC42NWE2LjcsNi43LDAsMCwwLTMtLjY2LDEzLjY1LDEzLjY1LDAsMCwwLTUuMjgsMS4zM0M1NTAuMjIsMjU3LDUxNS4xOCwyNzMuNyw0OTMsMjgxLjc2Yy0yMy4xNCw4LjM5LTMzLjM1LDEyLjE5LTQ4LjU0LDExYTgsOCwwLDAsMS03LjI1LTcuNjZxMC0xMi4xNSw5LjEyLTI4LjE0LDguNDQtMTQuNjcsMTgtMjMuNTIsMTAuMTctOS43OCwxOC42My05Ljc4YTEyLjM3LDEyLjM3LDAsMCwxLDksNGMyLDEuOTMsNC4wNSwyLjksNi4wOCwyLjlxNS44MiwwLDguMzItNS45NGE3LjUxLDcuNTEsMCwwLDAsLjUzLTIuNzgsOS4xNiw5LjE2LDAsMCwwLTIuMzgtNS44MXEtOS45LTEwLTIxLTEwYTM1LjgxLDM1LjgxLDAsMCwwLTEwLjE3LDEuNDVjLTUuMTgsMS40My0xMi4xNiw1LjQ2LTIwLjYxLDEzLjQ4YTEwNy4yNCwxMDcuMjQsMCwwLDAtMTcuMzksMjEuNDksMjEzLjQ3LDIxMy40NywwLDAsMS0yOC41OSwyNy43OXEtMjYuMTYsMjEuNTQtNDMuNiwyMS41NC0xMC4wNSwwLTE1LjkyLTQuODlhMzUuMSwzNS4xLDAsMCwxLTkuMzgtMTIuMzYsMTI3LjU3LDEyNy41NywwLDAsMS02LjE1LTE1Ljc5LDE0My45NCwxNDMuOTQsMCwwLDAtNS41NS0xNC40LDMyLjI1LDMyLjI1LDAsMCwwLTgtMTEuMXEtNS00LjM1LTEzLjE1LTQuMzYtMTQuNTQsMC0zMi4xMSwxNC44QTEzNSwxMzUsMCwwLDAsMjQ4LDI3MS4xNGwtLjEzLTcuMTRxMC0xMiwxLjA2LTI0LjA1LDE0LjY3LTI2LjI4LDQ4LjA5LTc0LjUyLDIzLTMyLjc2LDQzLjIxLTY1LjU0dDMwLjI2LTYzYTU3LjkyLDU3LjkyLDAsMCwwLDIuNzctMTYuMzlxMC05LjM3LTUuMTUtMTQuOTNUMzUyLjY0LDBhNjIuNDEsNjIuNDEsMCwwLDAtMTUuMzMsMi4yNVEyOTcuNTUsMTQsMjcwLjQ1LDc1LjQ1cS0yMS45Myw1MC0zMi43NiwxMTYuMjctNC4wOCwyNC43Ni01Ljc1LDQ2LjM1LTYuMzcsNy4xNC0xNC43OCwxNS4zN2EyMDcuNDIsMjA3LjQyLDAsMCwxLTMxLjIyLDI1LjIzcS0xNi41OSwxMC45LTMxLjExLDExLjcxLTkuMjYuMTItMTQuMy02LjA5YTQwLjcxLDQwLjcxLDAsMCwxLTcuNS0xNS45MiwxOTMuODEsMTkzLjgxLDAsMCwxLTQtMjAuNjIsMjM5LDIzOSwwLDAsMC00Ljc0LTIzLjQ5LDUyLjE1LDUyLjE1LDAsMCwwLTguODYtMTlxLTYtNy44MS0xNy4zNy0xMC4yMmEyOC40NiwyOC40NiwwLDAsMC01LjU4LS4yMnEtOC40My40Ni0xOS4xMyw3dC0yMi41LDE5YTMwNC41NywzMDQuNTcsMCwwLDAtMjEuNzksMjUuNzZjLjUyLTMuMjksMS4xLTYuNDYsMS43Mi05LjQ5YTEyLjkxLDEyLjkxLDAsMCwwLC4xMy0yLjUyLDcuMjEsNy4yMSwwLDAsMC0zLTUuNzMsOS41OSw5LjU5LDAsMCwwLTYuMjYtMS44MywyNi4yNSwyNi4yNSwwLDAsMC0zLjU0LjY2cS0yLjYxLjYxLTQsNi0zLjA4LDE2LTUuMzUsMzIuMzJDNy4yNywyNzUuMDYsMywyOTMuNzUsMywyOTQuOWE4LjQyLDguNDIsMCwwLDAsMi43Nyw1Ljg2QTguNzMsOC43MywwLDAsMCwxMi41NSwzMDNhNy44Miw3LjgyLDAsMCwwLDYuMjYtMy45MmMxMi42OS0yNy40MSwyMi44LTQxLjg0LDM4LjM5LTYwLjU1QzczLDIxOS41Nyw4My42NywyMTIuMjksOTIuMzgsMjExLjhhMTEuNjQsMTEuNjQsMCwwLDEsMi41Mi4xM3E4LjE3LDIuMDcsMTEuNzEsMTMuMTdhMTY1LjI2LDE2NS4yNiwwLDAsMSw1LjY5LDI2LjE2QTIwMi43NSwyMDIuNzUsMCwwLDAsMTE4LDI3OC42cTMuNTMsMTIuMywxMS44MiwxOS44NnQyNC41NSw3LjNxMTcuOC0xLDM2LTEyLjU5YTE5NC43OCwxOTQuNzgsMCwwLDAsMzMuODgtMjcuNDFjMi4yNy0yLjMsNC40NC00LjU1LDYuNTQtNi43OC0uMDcsMi45MS0uMTEsNS43OC0uMTEsOC41OXEwLDEuNTkuMDYsMTAuODR0My42NCwyM2MxLjQ5LDQuMTUsNC4xOCw2LjIxLDguMDUsNi4yMXE1LjU1LDAsOC40Ni02LjM0YTk5LjM5LDk5LjM5LDAsMCwxLDguNDYtMTZBMTQ0LjQ4LDE0NC40OCwwLDAsMSwyNzMsMjY3LjFhOTgsOTgsMCwwLDEsMTYuMTgtMTVxOC4zOS02LjA4LDE1Ljc5LTYuMDhjMi4yLDAsNCwxLjU3LDUuNDIsNC42OWE5OS40NCw5OS40NCwwLDAsMSw0LjI5LDExLjlxMi4xOSw3LjE5LDUuNDIsMTUuMTJhNjcuOCw2Ny44LDAsMCwwLDguNTIsMTUsNDEuNjIsNDEuNjIsMCwwLDAsMTMuNjEsMTEuNjNxOC4zMiw0LjU2LDIwLjg4LDQuNTYsMjIuMDcsMCw0OS4xNS0yMy4yNmMyLjg4LTIuNDgsNS43MS01LjA2LDguNDktNy43MWE1Myw1MywwLDAsMC0uNTcsNy40NXEwLDEwLjQ0LDUuMzYsMTYuODR0MTcuMjQsNi41NGExNTIuMSwxNTIuMSwwLDAsMCw1Ni4xNi0xMi40MmMyMy40NS05LjkyLDIyLjI0LTEwLjMxLDY5LjEtMzQuMzVxNS0yLjkxLDUtNi40OEE1LjE5LDUuMTksMCwwLDAsNTcwLDI1MC42NVpNMjgwLjUsOTUuNjdxMjQuODQtNjUuNjcsNjEuMTctNzdhMzMuNTQsMzMuNTQsMCwwLDEsOS4xMi0xLjcxcTUuNDEsMCw1LjQyLDUuNTVhMzMuNCwzMy40LDAsMCwxLTEuNzIsOXEtOC43MywyNy4zNS0zMS4xMiw2My4yM3QtNDUuNzgsNjkuNDNxLTEzLjc0LDE5LjgxLTI0LjE4LDM1LjY4QTUwNS43MSw1MDUuNzEsMCwwLDEsMjgwLjUsOTUuNjdaIi8+PC9nPjwvZz48L3N2Zz4=" alt="Natural Healing Center" style="height:70px;width:auto;filter:brightness(0) invert(1);margin-bottom:4px;">
+  </div>
+  <div class="banner-title" id="shop-title">Shop Leaderboard</div>
+  <div class="banner-meta" id="header-meta">Loading...</div>
+</div>
+
+<div class="page">
+
+  <!-- Manager Panel -->
+  <div class="mgr-panel" id="mgr-panel">
+    <div class="mgr-header">
+      <div class="mgr-header-title">⚙ Manager — Upload Data</div>
+      <div class="mgr-close" onclick="closePanel()">✕</div>
+    </div>
+    <div class="mgr-body">
+      <div id="pw-section">
+        <div class="pw-error" id="pw-error"></div>
+        <div class="pw-wrap">
+          <input class="pw-input" type="password" id="pw-input" placeholder="Password" maxlength="30"
+            onkeydown="if(event.key==='Enter')checkPW()">
+          <button class="pw-btn" onclick="checkPW()">Unlock</button>
+        </div>
+      </div>
+      <div class="upload-area" id="upload-area"
+        ondragover="event.preventDefault();this.classList.add('drag')"
+        ondragleave="this.classList.remove('drag')"
+        ondrop="event.preventDefault();this.classList.remove('drag');handleDrop(event)">
+        <input type="file" accept=".csv,.xlsx,.xls" id="file-input" onchange="handleFile(this.files[0])">
+        <div class="upload-icon" id="up-icon">📂</div>
+        <div class="upload-label" id="up-label">Click to upload or drag & drop</div>
+        <div class="upload-sub" id="up-sub">Treez Product Summary · .csv or .xlsx</div>
+        <div class="upload-result" id="up-result"></div>
+        <div class="sync-status" id="sync-status"></div>
+      </div>
+      <div class="export-section" id="export-section">
+        <div class="export-label">📥 Export reports</div>
+        <div class="export-btns">
+          <button class="export-btn brand" onclick="exportBrandReport()">📊 Brand Report (XLSX)</button>
+          <button class="export-btn retailer" onclick="exportRetailerReport()">🏪 Retailer Report (XLSX)</button>
+        </div>
+        <div class="export-btns" style="margin-top:8px">
+          <button class="export-btn csv" onclick="exportCSV('brand')">⬇ Brand CSV</button>
+          <button class="export-btn csv" onclick="exportCSV('retailer')">⬇ Retailer CSV</button>
+        </div>
+        <div class="export-status" id="export-status"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Reward banner — customize REWARD_HEADLINE in SHOP SETUP section -->
+  <div class="reward-banner">
+    <div class="reward-icon-wrap">🎁</div>
+    <div class="reward-text">
+      <div class="reward-eyebrow">⭐ Shop Rewards</div>
+      <div class="reward-headline" id="reward-headline">Earn gift cards just for selling what you love</div>
+      <div class="reward-tiers">
+        <div class="reward-tier">500 pts → $5</div>
+        <div class="reward-tier">1,000 pts → $10</div>
+        <div class="reward-tier">2,500 pts → $25</div>
+        <div class="reward-tier top">5,000 pts → $50 🏆</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active txn" onclick="switchTab('txn',this)"><span class="ti">🧾</span>Transactions</button>
+    <button class="tab sales" onclick="switchTab('sales',this)"><span class="ti">💵</span>Net Sales</button>
+    <button class="tab avg" onclick="switchTab('avg',this)"><span class="ti">🛒</span>ATV</button>
+    <button class="tab ghf" onclick="switchTab('ghf',this)"><span class="ti">🌲</span>GHF Units</button>
+    <button class="tab plus" onclick="switchTab('plus',this)"><span class="ti">🟪</span>Plus Units</button>
+    <button class="tab points" onclick="switchTab('points',this)"><span class="ti">⭐</span>Points</button>
+  </div>
+
+  <div id="board-txn"><div class="loading-bar">Loading latest data...</div></div>
+  <div id="board-sales" style="display:none"></div>
+  <div id="board-avg" style="display:none"></div>
+  <div id="board-ghf" style="display:none"></div>
+  <div id="board-plus" style="display:none"></div>
+  <div id="board-points" style="display:none"></div>
+
+  <div class="footer" id="footer">Natural Healing Center · Internal use only</div>
+</div>
+
+<script>
+  // ================================================================
+  // SHOP SETUP — fill in these 2 fields for each new shop
+  // ================================================================
+  const SHOP_NAME        = 'NHC Morro Bay';   // e.g. 'Farmacy Santa Barbara'
+  const MANAGER_PASSWORD = 'NHC2026';    // e.g. 'Farmacy2026'
+  const REWARD_HEADLINE  = 'Earn gift cards for every GHF & Plus unit you sell!'; // Customize per shop
+  // ================================================================
+
+  document.getElementById('shop-title').textContent = SHOP_NAME + ' — Leaderboard';
+  const rh = document.getElementById('reward-headline');
+  if(rh) rh.textContent = REWARD_HEADLINE;
+  document.title = SHOP_NAME + ' — Leaderboard';
+  window.SHOP_NAME = SHOP_NAME;
+
+  let tapCount=0, tapTimer=null;
+  function triggerTap(){
+    tapCount++;
+    clearTimeout(tapTimer);
+    if(tapCount>=5){
+      tapCount=0;
+      document.getElementById('mgr-panel').classList.add('open');
+      document.getElementById('pw-input').focus();
+    } else {
+      tapTimer=setTimeout(()=>{tapCount=0;},2000);
+    }
+  }
+  function closePanel(){
+    document.getElementById('mgr-panel').classList.remove('open');
+    tapCount=0;
+  }
+  function checkPW(){
+    const val=document.getElementById('pw-input').value;
+    if(val===MANAGER_PASSWORD){
+      document.getElementById('pw-section').style.display='none';
+      document.getElementById('upload-area').classList.add('visible');
+    } else {
+      const inp=document.getElementById('pw-input');
+      document.getElementById('pw-error').textContent='Incorrect password.';
+      inp.classList.add('error'); inp.value='';
+      setTimeout(()=>inp.classList.remove('error'),400);
+    }
+  }
+
+  const COLORS=['#2A6B6F','#7A9E7E','#B5830A','#6B4FA0','#C06A6A','#3D7A80','#8B6914','#5B3F8A','#4A8C70','#9E6B2A','#3A5F8C','#7A4A9E','#5C8C3A','#8C4A5C','#3A7A5C','#6B8C3A','#8C6B3A','#4A6B8C'];
+  const ini=n=>n.split(' ').map(p=>p[0]).join('').toUpperCase().slice(0,2);
+  const rl=i=>i===0?'🥇':i===1?'🥈':i===2?'🥉':String(i+1);
+  const fmt$=v=>'$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const fmtK=v=>v>=1000?'$'+(v/1000).toFixed(1)+'K':fmt$(v);
+
+  const TAB_CONFIG={
+    txn:{colHeader:'Transactions',podSub:'transactions',
+      metricFn:r=>r.txn,valFn:r=>r.txn.toLocaleString(),
+      m1Label:'Total Transactions',m1Fn:arr=>arr.reduce((s,r)=>s+r.txn,0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+r.txn,0)/arr.length).toLocaleString(),
+      m3Label:'Reps',m3Fn:arr=>arr.length},
+    sales:{colHeader:'Net Sales',podSub:'net sales',
+      metricFn:r=>r.sales,valFn:r=>fmtK(r.sales),
+      m1Label:'Total Net Sales',m1Fn:arr=>fmtK(arr.reduce((s,r)=>s+r.sales,0)),
+      m2Label:'Team Avg',m2Fn:arr=>fmtK(arr.reduce((s,r)=>s+r.sales,0)/arr.length),
+      m3Label:'Top Rep',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+    avg:{colHeader:'ATV',podSub:'avg transaction',
+      metricFn:r=>r.avg,valFn:r=>fmt$(r.avg),
+      m1Label:'Highest Avg',m1Fn:arr=>fmt$(arr[0]?.avg||0),
+      m2Label:'Team Avg',m2Fn:arr=>fmt$(arr.reduce((s,r)=>s+r.avg,0)/arr.length),
+      m3Label:'Lowest Avg',m3Fn:arr=>fmt$(arr[arr.length-1]?.avg||0)},
+    ghf:{colHeader:'Units Sold',podSub:'units sold',
+      metricFn:r=>r.units||r.ghf||0,valFn:r=>(r.units||r.ghf||0).toLocaleString(),
+      m1Label:'Total GHF Units',m1Fn:arr=>arr.reduce((s,r)=>s+(r.units||r.ghf||0),0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+(r.units||r.ghf||0),0)/arr.length).toLocaleString(),
+      m3Label:'Top Seller',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+    plus:{colHeader:'Units Sold',podSub:'units sold',
+      metricFn:r=>r.units||r.plus||0,valFn:r=>(r.units||r.plus||0).toLocaleString(),
+      m1Label:'Total Plus Units',m1Fn:arr=>arr.reduce((s,r)=>s+(r.units||r.plus||0),0).toLocaleString(),
+      m2Label:'Team Avg',m2Fn:arr=>Math.round(arr.reduce((s,r)=>s+(r.units||r.plus||0),0)/arr.length).toLocaleString(),
+      m3Label:'Top Seller',m3Fn:arr=>arr[0]?.name.split(' ')[0]||'—'},
+  };
+
+  window.renderAll=function(liveData){
+    renderPointsBoard(liveData.points||[]);
+    ['txn','sales','avg','ghf','plus'].forEach(tab=>{
+      const c=TAB_CONFIG[tab];
+      const data=liveData[tab];
+      if(!data||!data.length){document.getElementById('board-'+tab).innerHTML='<div class="loading-bar">No data</div>';return;}
+      const [p2,p1,p3]=[data[1],data[0],data[2]];
+      const podium=[p2,p1,p3].map((r,i)=>{
+        if(!r) return '<div></div>';
+        return '<div class="podium-card'+(i===1?' p1 '+tab:'')+'">'
+          +'<div class="podium-emoji">'+(i===1?'🥇':i===0?'🥈':'🥉')+'</div>'
+          +'<div class="podium-name">'+r.name+'</div>'
+          +'<div class="podium-val">'+c.valFn(r)+'</div>'
+          +'<div class="podium-sub">'+c.podSub+'</div></div>';
+      }).join('');
+      const rows=data.map((rep,i)=>{
+        const color=COLORS[i%COLORS.length];
+        return '<div class="rep-row'+(i===0?' hl':'')+'">'
+          +'<div class="rank">'+rl(i)+'</div>'
+          +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
+          +'<div class="rep-name">'+rep.name+'</div></div>'
+          +'<div class="val">'+c.valFn(rep)+'</div></div>';
+      }).join('');
+      document.getElementById('board-'+tab).innerHTML=
+        ((tab==='ghf'||tab==='plus') ? firstPlaceBanner(tab,data) : '') +
+        '<div class="metrics">'
+        +'<div class="metric"><div class="metric-label">'+c.m1Label+'</div><div class="metric-val">'+c.m1Fn(data)+'</div></div>'
+        +'<div class="metric"><div class="metric-label">'+c.m2Label+'</div><div class="metric-val">'+c.m2Fn(data)+'</div></div>'
+        +'<div class="metric"><div class="metric-label">'+c.m3Label+'</div><div class="metric-val">'+c.m3Fn(data)+'</div></div>'
+        +'</div><div class="podium">'+podium+'</div>'
+        +'<div class="card"><div class="thead '+tab+'">'
+        +'<div style="text-align:center">#</div><div>Rep</div>'
+        +'<div style="text-align:right">'+c.colHeader+'</div></div>'+rows+'</div>';
+    });
+  };
+
+
+  const TIERS=[
+    {pts:500,  reward:'$5 Gift Card',  emoji:'🎁'},
+    {pts:1000, reward:'$10 Gift Card', emoji:'🎁'},
+    {pts:2500, reward:'$25 Gift Card', emoji:'💳'},
+    {pts:5000, reward:'$50 Gift Card + Swag', emoji:'🏆'},
+  ];
+
+  function getAllTimeKey(name){return 'pts_at_'+SHOP_NAME.replace(/\s/g,'_')+'_'+name.replace(/\s/g,'_');}
+  function getAllTime(name){return parseInt(localStorage.getItem(getAllTimeKey(name))||'0');}
+
+  function renderPointsBoard(reps){
+    if(!reps||!reps.length){document.getElementById('board-points').innerHTML='<div class="loading-bar">Upload data to see points</div>';return;}
+    const withAllTime=reps.map(r=>({...r,allTime:getAllTime(r.name)}));
+    const sorted=[...withAllTime].sort((a,b)=>b.monthlyPts-a.monthlyPts);
+    const totalMonthly=sorted.reduce((s,r)=>s+r.monthlyPts,0);
+    const topRep=sorted[0];
+
+    const teamHtml='<div class="points-hero">'
+      +'<div class="points-hero-label">Shop Points — This Month</div>'
+      +'<div class="points-total">'+totalMonthly.toLocaleString()+'</div>'
+      +'<div class="points-sub">Total points earned by the team</div>'
+      +'<div class="points-split">'
+      +'<div class="points-pill"><div class="points-pill-val">'+topRep.monthlyPts.toLocaleString()+'</div><div class="points-pill-label">Top: '+topRep.name.split(' ')[0]+'</div></div>'
+      +'<div class="points-pill"><div class="points-pill-val">'+Math.round(totalMonthly/sorted.length).toLocaleString()+'</div><div class="points-pill-label">Team avg</div></div>'
+      +'</div></div>';
+
+    const earnHtml='<div class="earn-card"><div class="earn-header">How to earn points</div>'
+      +'<div class="earn-row"><span class="earn-icon">🌲</span><span class="earn-desc">Per GHF unit sold</span><span class="earn-pts">5 pts</span></div>'
+      +'<div class="earn-row"><span class="earn-icon">🟪</span><span class="earn-desc">Per Plus unit sold</span><span class="earn-pts">5 pts</span></div>'
+      +'<div class="earn-row"><span class="earn-icon">💵</span><span class="earn-desc">Per $1 in net sales</span><span class="earn-pts">1 pt</span></div>'
+      +'</div>';
+
+    const demoAllTime=topRep.allTime||topRep.monthlyPts;
+    const tierHtml='<div class="redeem-card"><div class="redeem-header">Redemption tiers — All-time points</div>'
+      +TIERS.map(tier=>{
+        const pct=Math.min(Math.round(demoAllTime/tier.pts*100),100);
+        const unlocked=demoAllTime>=tier.pts;
+        return '<div class="tier-row'+(unlocked?' unlocked':'')+'"><div class="tier-badge">'+tier.emoji+'</div>'
+          +'<div class="tier-info"><div class="tier-reward">'+tier.reward+'</div>'
+          +'<div class="tier-pts-needed">'+tier.pts.toLocaleString()+' points</div>'
+          +'<div class="tier-progress"><div class="tier-bar-bg"><div class="tier-bar-fill" style="width:'+pct+'%"></div></div>'
+          +'<div class="tier-pct">'+pct+'% there</div></div></div>'
+          +(unlocked?'<div class="tier-unlocked-badge">✓ Unlocked</div>':'')
+          +'</div>';
+      }).join('')+'</div>';
+
+    const repRows=sorted.map((rep,i)=>{
+      const color=COLORS[i%COLORS.length];
+      return '<div class="pts-row'+(i===0?' hl':'')+'"><div class="rank">'+rl(i)+'</div>'
+        +'<div class="rep-info"><div class="avatar" style="background:'+color+'22;color:'+color+'">'+ini(rep.name)+'</div>'
+        +'<div class="rep-name">'+rep.name+'</div></div>'
+        +'<div class="pts-val">'+rep.monthlyPts.toLocaleString()+'</div>'
+        +'<div class="pts-monthly">'+rep.allTime.toLocaleString()+'</div>'
+        +'</div>';
+    }).join('');
+
+    const lbHtml='<div class="points-leaderboard">'
+      +'<div class="pts-head"><div style="text-align:center">#</div><div>Rep</div><div style="text-align:right">This Month</div><div style="text-align:right">All-Time</div></div>'
+      +repRows+'</div>';
+
+    document.getElementById('board-points').innerHTML=
+      '<div class="perennial-badge">⭐ Shop Rewards</div>'+teamHtml+earnHtml+tierHtml+lbHtml;
+  }
+
+  // ── Export functions ──────────────────────────────────────────
+
+  function getExportData(){
+    if(!liveData) return null;
+    const txn  = liveData.txn  || [];
+    const sales= liveData.sales|| [];
+    const avg  = liveData.avg  || [];
+    const ghf  = liveData.ghf  || [];
+    const plus = liveData.plus || [];
+    // Merge all rep names
+    const names = [...new Set([...txn,...sales,...ghf,...plus].map(r=>r.name))];
+    return names.map(name=>{
+      const t = txn.find(r=>r.name===name)   ||{txn:0};
+      const s = sales.find(r=>r.name===name) ||{sales:0};
+      const a = avg.find(r=>r.name===name)   ||{avg:0};
+      const g = ghf.find(r=>r.name===name)   ||{units:0,ghf:0};
+      const p = plus.find(r=>r.name===name)  ||{units:0,plus:0};
+      const ghfU = g.units||g.ghf||0;
+      const plusU= p.units||p.plus||0;
+      const netS = s.sales||0;
+      const monthlyPts = Math.round(ghfU*5 + plusU*5 + netS*1);
+      const allTimePts = getAllTime(name);
+      return {
+        name, txn:t.txn||0, sales:netS,
+        avg:a.avg||0, ghf:ghfU, plus:plusU,
+        monthlyPts, allTimePts
+      };
+    }).sort((a,b)=>b.txn-a.txn);
+  }
+
+  function exportBrandReport(){
+    const data = getExportData();
+    if(!data){ document.getElementById('export-status').textContent='⚠ Upload data first'; return; }
+    const status = document.getElementById('export-status');
+    status.textContent = '⏳ Building brand report...';
+
+    const wb = XLSX.utils.book_new();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+    // ── Sheet 1: Summary ─────────────────────────────────────────
+    const totalGHF   = data.reduce((s,r)=>s+r.ghf,0);
+    const totalPlus  = data.reduce((s,r)=>s+r.plus,0);
+    const totalSales = data.reduce((s,r)=>s+r.sales,0);
+    const totalPts   = data.reduce((s,r)=>s+r.monthlyPts,0);
+    const topRep     = [...data].sort((a,b)=>b.ghf+b.plus - (a.ghf+a.plus))[0];
+
+    const summaryRows = [
+      ['BRAND PERFORMANCE REPORT'],
+      [SHOP_NAME + '  ·  ' + dateStr + ''],
+      [],
+      ['METRIC', 'VALUE', 'NOTES'],
+      ['GHF Units Sold', totalGHF, 'Total GHF units this period'],
+      ['Plus Units Sold', totalPlus, 'Total Plus units this period'],
+      ['Total Brand Units', totalGHF+totalPlus, 'GHF + Plus combined'],
+      ['Net Sales Attributed', totalSales, 'Total net sales from all reps'],
+      ['Avg Units Per Rep', Math.round((totalGHF+totalPlus)/data.length), 'Across ' + data.length + ' reps'],
+      ['Top Brand Rep', topRep ? topRep.name : '—', topRep ? (topRep.ghf+topRep.plus) + ' total brand units' : ''],
+      ['Total Points Earned', totalPts, 'Team total this month'],
+      [],
+      ['PROGRAM ECONOMICS', '', ''],
+      ['Platform fee (est.)', '$175.00', 'Per location monthly fee'],
+      ['Est. redemptions (30%)', '$' + (totalPts * 0.01 * 0.3).toFixed(2), '30% redemption rate on earned points'],
+      ['Est. total program cost', '$' + (175 + totalPts * 0.01 * 0.3).toFixed(2), 'Fee + redemptions'],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:30},{wch:20},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Brand Summary');
+
+    // ── Sheet 2: Rep Detail ──────────────────────────────────────
+    const repRows = [
+      ['PERENNIAL REWARDS — REP PERFORMANCE (' + dateStr + ')'],
+      [],
+      ['Rep Name','Transactions','Net Sales ($)','ATV ($)','GHF Units','Plus Units','Total Brand Units','Monthly Points','All-Time Points','Brand Rank'],
+      ...data.map((r,i) => [
+        r.name, r.txn,
+        parseFloat(r.sales.toFixed(2)),
+        parseFloat(r.avg.toFixed(2)),
+        r.ghf, r.plus, r.ghf+r.plus,
+        r.monthlyPts, r.allTimePts,
+        i+1
+      ]),
+      [],
+      ['TOTAL / AVG',
+        data.reduce((s,r)=>s+r.txn,0),
+        parseFloat(data.reduce((s,r)=>s+r.sales,0).toFixed(2)),
+        parseFloat((data.reduce((s,r)=>s+r.avg,0)/data.length).toFixed(2)),
+        totalGHF, totalPlus, totalGHF+totalPlus,
+        totalPts,
+        data.reduce((s,r)=>s+r.allTimePts,0),
+        ''
+      ]
+    ];
+    const wsReps = XLSX.utils.aoa_to_sheet(repRows);
+    wsReps['!cols'] = [{wch:22},{wch:14},{wch:14},{wch:10},{wch:12},{wch:12},{wch:16},{wch:14},{wch:14},{wch:10}];
+    XLSX.utils.book_append_sheet(wb, wsReps, 'Rep Performance');
+
+    // ── Sheet 3: Points Detail ───────────────────────────────────
+    const tiers = [{pts:500,reward:'$5 Gift Card'},{pts:1000,reward:'$10 Gift Card'},{pts:2500,reward:'$25 Gift Card'},{pts:5000,reward:'$50 + Swag'}];
+    const ptsRows = [
+      ['PERENNIAL POINTS DETAIL — ' + dateStr],
+      [],
+      ['Rep Name','Monthly Points','All-Time Points','Tier Unlocked','Next Tier','Points Needed'],
+      ...data.map(r => {
+        const unlocked = [...tiers].reverse().find(t=>r.allTimePts>=t.pts);
+        const next = tiers.find(t=>r.allTimePts<t.pts);
+        return [
+          r.name, r.monthlyPts, r.allTimePts,
+          unlocked ? unlocked.reward : 'None yet',
+          next ? next.reward : '✓ Max tier',
+          next ? Math.max(0, next.pts - r.allTimePts) : 0
+        ];
+      })
+    ];
+    const wsPts = XLSX.utils.aoa_to_sheet(ptsRows);
+    wsPts['!cols'] = [{wch:22},{wch:14},{wch:14},{wch:16},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsPts, 'Points Detail');
+
+    const fname = 'Brand_Report_' + SHOP_NAME.replace(/\s+/g,'_') + '_' + now.toISOString().slice(0,7) + '.xlsx';
+    XLSX.writeFile(wb, fname);
+    status.textContent = '✅ Brand report downloaded!';
+    setTimeout(()=>{ status.textContent=''; }, 3000);
+  }
+
+  function exportRetailerReport(){
+    const data = getExportData();
+    if(!data){ document.getElementById('export-status').textContent='⚠ Upload data first'; return; }
+    const status = document.getElementById('export-status');
+    status.textContent = '⏳ Building retailer report...';
+
+    const wb = XLSX.utils.book_new();
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+
+    // ── Sheet 1: Shop Summary ────────────────────────────────────
+    const totalTxn   = data.reduce((s,r)=>s+r.txn,0);
+    const totalSales = data.reduce((s,r)=>s+r.sales,0);
+    const avgAtv     = totalTxn > 0 ? totalSales/totalTxn : 0;
+    const totalGHF   = data.reduce((s,r)=>s+r.ghf,0);
+    const totalPlus  = data.reduce((s,r)=>s+r.plus,0);
+    const totalPts   = data.reduce((s,r)=>s+r.monthlyPts,0);
+    const aboveAvg   = data.filter(r=>r.txn > totalTxn/data.length).length;
+
+    const summaryRows = [
+      ['SHOP PERFORMANCE REPORT'],
+      [SHOP_NAME + '  ·  ' + dateStr + ''],
+      [],
+      ['SHOP PERFORMANCE', 'VALUE', 'NOTES'],
+      ['Total Transactions', totalTxn, 'All POS Sale transactions'],
+      ['Net Sales ($)', parseFloat(totalSales.toFixed(2)), 'Total net sales this period'],
+      ['Avg Transaction Value ($)', parseFloat(avgAtv.toFixed(2)), 'Net sales / transactions'],
+      ['GHF Units Sold', totalGHF, 'Glass House Farms units'],
+      ['Plus Units Sold', totalPlus, 'Plus Products units'],
+      ['Total Brand Units', totalGHF+totalPlus, 'GHF + Plus combined'],
+      ['Active Reps', data.length, 'Reps with at least 1 transaction'],
+      ['Reps Above Team Avg', aboveAvg, 'Above avg transactions per rep'],
+      [],
+      ['STAFF ENGAGEMENT', '', ''],
+      ['Total Points Earned (Team)', totalPts, 'This month'],
+      ['Avg Points Per Rep', Math.round(totalPts/data.length), 'Across ' + data.length + ' reps'],
+      ['Est. Redemption Cost ($)', parseFloat((totalPts*0.01*0.3).toFixed(2)), '30% redemption rate'],
+      ['Reps at Tier 1+ (500 pts)', data.filter(r=>r.allTimePts>=500).length, 'Eligible for $5 gift card'],
+      ['Reps at Tier 2+ (1000 pts)', data.filter(r=>r.allTimePts>=1000).length, 'Eligible for $10 gift card'],
+      ['Reps at Tier 3+ (2500 pts)', data.filter(r=>r.allTimePts>=2500).length, 'Eligible for $25 gift card'],
+      ['Reps at Tier 4+ (5000 pts)', data.filter(r=>r.allTimePts>=5000).length, 'Eligible for $50 + swag'],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!cols'] = [{wch:30},{wch:18},{wch:40}];
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Shop Summary');
+
+    // ── Sheet 2: Rep Leaderboard ─────────────────────────────────
+    const retRows = [
+      ['STAFF LEADERBOARD — ' + SHOP_NAME + ' — ' + dateStr],
+      [],
+      ['Rank','Rep Name','Transactions','Net Sales ($)','ATV ($)','GHF Units','Plus Units','Monthly Points','All-Time Points'],
+      ...data.map((r,i) => [
+        i+1, r.name, r.txn,
+        parseFloat(r.sales.toFixed(2)),
+        parseFloat(r.avg.toFixed(2)),
+        r.ghf, r.plus,
+        r.monthlyPts, r.allTimePts
+      ]),
+      [],
+      ['','TOTAL',
+        data.reduce((s,r)=>s+r.txn,0),
+        parseFloat(totalSales.toFixed(2)),
+        parseFloat(avgAtv.toFixed(2)),
+        totalGHF, totalPlus,
+        totalPts,
+        data.reduce((s,r)=>s+r.allTimePts,0)
+      ]
+    ];
+    const wsRet = XLSX.utils.aoa_to_sheet(retRows);
+    wsRet['!cols'] = [{wch:6},{wch:22},{wch:14},{wch:14},{wch:10},{wch:12},{wch:12},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsRet, 'Rep Leaderboard');
+
+    const fname = 'Retailer_Report_' + SHOP_NAME.replace(/\s+/g,'_') + '_' + now.toISOString().slice(0,7) + '.xlsx';
+    XLSX.writeFile(wb, fname);
+    status.textContent = '✅ Retailer report downloaded!';
+    setTimeout(()=>{ status.textContent=''; }, 3000);
+  }
+
+  function exportCSV(type){
+    const data = getExportData();
+    if(!data){ document.getElementById('export-status').textContent='⚠ Upload data first'; return; }
+    const status = document.getElementById('export-status');
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0,7);
+
+    let rows, fname;
+    if(type === 'brand'){
+      rows = [
+        ['Rep Name','GHF Units','Plus Units','Total Brand Units','Net Sales','Monthly Points','All-Time Points'],
+        ...data.sort((a,b)=>b.ghf+b.plus-(a.ghf+a.plus)).map(r=>[
+          r.name, r.ghf, r.plus, r.ghf+r.plus,
+          r.sales.toFixed(2), r.monthlyPts, r.allTimePts
+        ])
+      ];
+      fname = 'Brand_Report_' + SHOP_NAME.replace(/\s+/g,'_') + '_' + dateStr + '.csv';
+    } else {
+      rows = [
+        ['Rank','Rep Name','Transactions','Net Sales','ATV','GHF Units','Plus Units','Monthly Points'],
+        ...data.map((r,i)=>[
+          i+1, r.name, r.txn, r.sales.toFixed(2),
+          r.avg.toFixed(2), r.ghf, r.plus, r.monthlyPts
+        ])
+      ];
+      fname = 'Retailer_Report_' + SHOP_NAME.replace(/\s+/g,'_') + '_' + dateStr + '.csv';
+    }
+    const csv = rows.map(r=>r.join(',')).join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fname;
+    a.click();
+    status.textContent = '✅ CSV downloaded!';
+    setTimeout(()=>{ status.textContent=''; }, 3000);
+  }
+
+
+  // ── 1st place prize config ────────────────────────────
+  // Change these to set the monthly prize per brand tab
+  const FIRST_PLACE_PRIZES = {
+    ghf:  'MANAGER PRIZE HERE',   // e.g. "$25 Gift Card" or "GHF Branded Hoodie"
+    plus: 'MANAGER PRIZE HERE',   // e.g. "$25 Gift Card" or "Plus Products Swag"
+  };
+
+  function firstPlaceBanner(tab, data){
+    if(!data || !data.length) return '';
+    const winner = data[0];
+    const prize = FIRST_PLACE_PRIZES[tab] || 'Prize TBD';
+    const label = tab === 'ghf' ? 'Top GHF Seller' : 'Top Plus Seller';
+    const brand = tab === 'ghf' ? 'Glass House Farms' : 'Plus Products';
+    const c = TAB_CONFIG[tab];
+    return '<div class="first-place-banner">'
+      +'<div class="first-place-crown">👑</div>'
+      +'<div class="first-place-text">'
+      +'<div class="first-place-eyebrow">Monthly ' + label + '</div>'
+      +'<div class="first-place-title">' + brand + ' Champion</div>'
+      +'<div class="first-place-prize">' + (prize === 'MANAGER PRIZE HERE' ? '<span class="prize-placeholder">Prize to be announced by manager</span>' : '🎁 ' + prize) + '</div>'
+      +'<div class="first-place-winner">'
+      +'<div class="first-place-winner-label">Current leader:</div>'
+      +'<div class="first-place-winner-name">👑 ' + winner.name + '</div>'
+      +'<div class="first-place-winner-val">' + c.valFn(winner) + '</div>'
+      +'</div>'
+      +'</div></div>';
+  }
+
+  function switchTab(tab,btn){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    btn.classList.add('active');
+    ['txn','sales','avg','ghf','plus','points'].forEach(t=>{
+      document.getElementById('board-'+t).style.display=t===tab?'block':'none';
+    });
+  }
+
+  function handleFile(file){
+    if(!file) return;
+    document.getElementById('up-icon').textContent='⏳';
+    document.getElementById('up-label').textContent='Processing...';
+    const reader=new FileReader();
+    reader.onload=async e=>{
+      try{
+        let rows;
+        if(file.name.toLowerCase().endsWith('.csv')){
+          const lines=e.target.result.split('\n');
+          const headers=lines[0].split(',').map(h=>h.replace(/^"|"$/g,'').trim());
+          rows=lines.slice(1).filter(l=>l.trim()).map(line=>{
+            const cols=[]; let cur='',inQ=false;
+            for(const ch of (line+',')){
+              if(ch==='"'){inQ=!inQ;}
+              else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}
+              else cur+=ch;
+            }
+            const obj={};
+            headers.forEach((h,i)=>{obj[h]=(cols[i]||'').replace(/^"|"$/g,'').trim();});
+            return obj;
+          });
+        } else {
+          const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+          rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+        }
+        const filtered=rows.filter(r=>
+          (r['Ticket Type']||'').trim()==='POS'&&
+          (r['Type']||'').trim()==='Sale'&&
+          (r['Cashier']||'').trim()!==''
+        );
+        if(filtered.length===0) throw new Error('No POS Sale rows found');
+        const byRep={};
+        filtered.forEach(r=>{
+          const name=r['Cashier'].trim();
+          const tid=(r['Ticket ID']||'').trim();
+          const ns=parseFloat(r['Net Sales'])||0;
+          const qty=parseFloat(r['Qty'])||0;
+          const brand=(r['Brand']||'').trim().toUpperCase();
+          if(!byRep[name]) byRep[name]={tickets:new Set(),sales:0,ghf:0,plus:0};
+          if(tid) byRep[name].tickets.add(tid);
+          byRep[name].sales+=ns;
+          if(brand==='GLASS HOUSE FARMS') byRep[name].ghf+=qty;
+          if(brand==='PLUS PRODUCTS') byRep[name].plus+=qty;
+        });
+        const reps=Object.entries(byRep).map(([name,d])=>{
+          const txn=d.tickets.size;
+          const sales=Math.round(d.sales*100)/100;
+          const ghf=Math.round(d.ghf);
+          const plus=Math.round(d.plus);
+          const monthlyPts=Math.round(ghf*5 + plus*5 + sales*1);
+          return { name, txn, sales, avg:txn>0?Math.round(sales/txn*100)/100:0, ghf, plus, monthlyPts };
+        }).filter(r=>r.txn>0);
+        const liveData={
+          txn:[...reps].sort((a,b)=>b.txn-a.txn),
+          sales:[...reps].sort((a,b)=>b.sales-a.sales),
+          avg:[...reps].filter(r=>r.txn>=5).sort((a,b)=>b.avg-a.avg),
+          ghf:[...reps].filter(r=>r.ghf>0).sort((a,b)=>b.ghf-a.ghf),
+          plus:[...reps].filter(r=>r.plus>0).sort((a,b)=>b.plus-a.plus),
+          points:[...reps].sort((a,b)=>b.monthlyPts-a.monthlyPts),
+        };
+        const now=new Date();
+        const updatedAt=now.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})
+          +' at '+now.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+        window.renderAll(liveData);
+        document.getElementById('header-meta').textContent='Updated '+updatedAt;
+        document.getElementById('footer').textContent='Natural Healing Center · '+SHOP_NAME+' · Updated '+updatedAt;
+        document.getElementById('upload-area').classList.add('done');
+        document.getElementById('up-icon').textContent='✅';
+        document.getElementById('up-label').textContent=file.name;
+        document.getElementById('up-sub').textContent=reps.length+' reps · '+filtered.length.toLocaleString()+' transactions';
+        document.getElementById('up-result').style.display='block';
+        document.getElementById('up-result').textContent='All 6 tabs updated';
+        document.getElementById('sync-status').style.display='block';
+        document.getElementById('sync-status').textContent='💾 Syncing to all devices...';
+        const saved=await window.saveToFirebase(liveData,updatedAt);
+        document.getElementById('sync-status').textContent=saved
+          ?'✅ Synced — all devices now show updated data'
+          :'⚠ Sync failed — check Firebase config';
+        document.getElementById('export-section').classList.add('visible');
+      } catch(err){
+        document.getElementById('up-icon').textContent='⚠️';
+        document.getElementById('up-label').textContent='Error: '+err.message;
+        document.getElementById('up-sub').textContent='Check this is a Treez Product Summary export';
+        console.error(err);
+      }
+    };
+    file.name.toLowerCase().endsWith('.csv')?reader.readAsText(file):reader.readAsArrayBuffer(file);
+  }
+
+  function handleDrop(e){
+    const file=e.dataTransfer.files[0];
+    if(file) handleFile(file);
+  }
+
+  window.addEventListener('load',()=>{
+    if(typeof window.loadFromFirebase==='function') window.loadFromFirebase();
+  });
+</script>
+
+<script>
+function openDrawer(){
+  document.getElementById('ham-drawer').classList.add('open');
+  document.getElementById('ham-overlay').classList.add('visible');
+  document.getElementById('ham-btn').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDrawer(){
+  document.getElementById('ham-drawer').classList.remove('open');
+  document.getElementById('ham-overlay').classList.remove('visible');
+  document.getElementById('ham-btn').classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeDrawer(); });
+(function(){
+  var page = window.location.pathname.split('/').pop() || 'index.html';
+  var map = {
+    'index.html':'ham-hub', '':'ham-hub',
+    'leaderboard.html':'ham-leaderboard',
+    'redeem.html':'ham-redeem',
+    'myrep.html':'ham-myrep',
+    'roster.html':'ham-roster',
+    'dashboard.html':'ham-dashboard',
+  };
+  var isLB = page.includes('leaderboard');
+  var activeId = isLB ? 'ham-leaderboard' : (map[page] || '');
+  if(activeId){ var el=document.getElementById(activeId); if(el) el.classList.add('active'); }
+  var shopEl = document.getElementById('ham-shop-name');
+  if(shopEl){
+    var sn = (typeof SHOP_NAME !== 'undefined') ? SHOP_NAME : '';
+    shopEl.textContent = sn;
+  }
+})();
+</script>
+
+</body>
+</html>
